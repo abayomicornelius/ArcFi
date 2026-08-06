@@ -93,9 +93,16 @@ forge script script/Deploy.s.sol --rpc-url arc_testnet --broadcast --verify
 
 ## Frontend
 
-`frontend/` is a Next.js + wagmi/viem sponsor & maintainer dashboard — connect a wallet, fund an escrow, allocate/release milestones, and deposit into or draw down a maintenance pool. No WalletConnect account needed; it connects directly to an injected wallet (MetaMask etc.).
+`frontend/` is a full Next.js site, not just a contract dashboard:
 
-It ships pointed at a **local Anvil chain with a mock USDC** by default, so the whole flow — including a one-click "mint test USDC" faucet — is demoable with zero external dependencies:
+- **Marketing home** (`/`) — the pitch, live protocol stats, and how-it-works.
+- **App** (`/app`) — connect a wallet, fund an escrow, allocate/release milestones, deposit into or draw down a maintenance pool. A live activity feed watches all three contracts' events in real time. No WalletConnect account needed; it connects directly to an injected wallet (MetaMask etc.).
+- **Profiles** — sign in with GitHub (`/onboarding`) to register as a **sponsor**, **maintainer**, and/or **contributor**, write a bio, and link a wallet. Profiles are backed by a real database (Prisma + SQLite locally), not mocked.
+- **Directories** (`/sponsors`, `/maintainers`, `/contributors`) — public listings that merge registered profiles with on-chain USDC funded/received totals computed by scanning contract events. `/profile/[address]` is the per-wallet detail page.
+
+### Local setup
+
+The app ships pointed at a **local Anvil chain with a mock USDC** by default, so the contract flow — including a one-click "mint test USDC" faucet — is demoable with zero external dependencies:
 
 ```shell
 # 1. In one terminal: start a local chain
@@ -104,22 +111,33 @@ anvil
 # 2. In another: deploy the contract suite + a MockUSDC against it
 forge script script/DeployLocal.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 
-# 3. Copy the logged addresses into frontend/.env.local (see frontend/.env.example),
-#    then run the app
+# 3. Set up the frontend
 cd frontend
-cp .env.example .env.local   # fill in the addresses from step 2
-npm install
+cp .env.example .env.local   # fill in the logged addresses from step 2
+npm install                  # also runs `prisma generate`
+npm run db:migrate           # creates the local SQLite profiles database
 npm run dev
 ```
 
 To point it at Arc testnet instead, deploy with `script/Deploy.s.sol` (see above), set `NEXT_PUBLIC_CHAIN=arc` plus the resulting addresses in `frontend/.env.local`, and connect a wallet funded with real Arc-testnet USDC — the faucet button only appears on the local chain, since it depends on MockUSDC's open `mint`.
 
+### GitHub sign-in
+
+Profiles require a GitHub OAuth App (this one manual step can't be scripted — GitHub requires it be created through their UI):
+
+1. [github.com/settings/developers](https://github.com/settings/developers) → **New OAuth App**.
+2. Homepage URL: `http://localhost:3000`. Callback URL: `http://localhost:3000/api/auth/callback/github`.
+3. Copy the Client ID, generate a Client Secret, and set `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` in `frontend/.env.local`.
+4. Set `AUTH_SECRET` to a random value (`openssl rand -base64 32`) and `AUTH_URL` to your app's URL.
+
+Everything else — the app, directories, and profile pages — works without this; only "Connect GitHub" requires it.
+
 ## Roadmap
 
 - [x] Checkpoint 1 — project + idea (this repo)
-- [x] Checkpoint 2 — contracts + a sponsor/maintainer dashboard (`frontend/`), demoable end-to-end against a local chain
+- [x] Checkpoint 2 — contracts + a full sponsor/maintainer/contributor site (`frontend/`) with GitHub-backed profiles, demoable end-to-end against a local chain
 - [ ] Deploy to Arc testnet once a testnet USDC address is sourced
-- [ ] Checkpoint 3 — functional MVP: GitHub-webhook oracle backend wired to `release`/`releaseIssue`/`withdraw`, App Kit **Send** for sponsor deposits, demo video + deck
+- [ ] Checkpoint 3 — functional MVP: GitHub-webhook oracle backend wired to `release`/`releaseIssue`/`withdraw` (currently triggered manually from `/app`), App Kit **Send** for sponsor deposits, demo video + deck
 - [ ] Post-hackathon — CCTP-based cross-chain funding (sponsor on Ethereum/Base, payout settles on Arc), Circle Wallets for contributor onboarding without a prior wallet
 
 ---
