@@ -85,4 +85,9 @@ contract ArcFiMaintenancePoolTest is Test {
         assertEq(pool.getPool(1).balance, 500e6);
         assertEq(pool.getPool(2).balance, 700e6);
     }
+
+    function test_constructor_revertsOnFeeBpsOver10000() public {
+        vm.expectRevert(ArcFiMaintenancePool.InvalidFeeBps.selector);
+        new ArcFiMaintenancePool(address(usdc), admin, treasury, 10_001);
+    }
 }

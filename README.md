@@ -144,12 +144,70 @@ Profiles require a GitHub OAuth App (this one manual step can't be scripted — 
 
 Everything else — the app, directories, and profile pages — works without this; only "Connect GitHub" requires it. Until it's configured, the button shows a clear toast explaining why instead of failing silently.
 
+## Backend / Oracle (`backend/`)
+
+A standalone service that closes the loop: it watches GitHub for merged PRs
+and releases the linked bounty on-chain automatically, with no human in the
+middle. `withdraw` (maintenance pool) stays a manual, oracle-signed action —
+by contract design that's an off-chain-adjudicated maintainer draw-down, not
+tied to a single PR the way escrow/milestone payouts are.
+
+1. On the frontend, funding an escrow (`EscrowPanel`) or allocating a
+   milestone issue (`MilestonesPanel`) now has optional GitHub
+   owner/repo/issue# fields. Filling them in (requires GitHub sign-in)
+   registers the on-chain issue against a real GitHub issue via
+   `POST /api/bounties/register`.
+2. `backend/` receives GitHub's `pull_request` webhook, verifies its HMAC
+   signature, and — once a PR is merged and its body closes a registered
+   issue (`closes #12`, `fixes #7`, ...) — resolves the PR author's linked
+   wallet and calls `release`/`releaseIssue` with the oracle's key. It talks
+   to the frontend's `/api/internal/*` routes (shared-secret auth) rather
+   than touching the database directly, so Prisma access stays in one place.
+3. Idempotent by design: a redelivered or duplicate webhook finds the
+   bounty already marked `released` and skips it; even if it didn't, the
+   contracts themselves revert cleanly on double-release.
+
+Setup:
+
+```shell
+cd backend
+cp .env.example .env   # fill in ADMIN_PRIVATE_KEY, contract addresses, a
+                        # generated GITHUB_WEBHOOK_SECRET, and
+                        # INTERNAL_API_SECRET (must match frontend/.env.local)
+npm install
+npm test                # unit tests for signature verification + PR parsing
+npm run dev
+```
+
+Then add a webhook at `github.com/<owner>/<repo>/settings/hooks` — Payload
+URL: this server's publicly reachable `/webhooks/github` (use `ngrok` or
+similar for local testing), content type `application/json`, secret matching
+`GITHUB_WEBHOOK_SECRET`, events: **Pull requests**.
+
+Verified end-to-end against a local Anvil deployment: funded an escrow,
+POSTed a synthetic (correctly-signed) merged-PR payload straight at the
+backend, and confirmed the release transaction executed on-chain, USDC
+landed in the contributor's wallet net of the protocol fee, and the bounty
+record flipped to `released` — with a redelivered copy of the same webhook
+correctly treated as a no-op afterward.
+
+## Known limitations
+
+- **Single EOA for deployer/admin/treasury.** The address that deployed the
+  contracts is also the oracle authority and the fee recipient. Fine for a
+  hackathon demo; before any real funds depend on this, split these roles
+  (ideally the oracle key lives only in `backend/`'s environment, not a
+  personal wallet) and consider a multisig for `admin`/`treasury`.
+- **Single-recipient auto-resolution.** The oracle pays the merged PR's
+  author 100% of a bounty. Team splits are still possible, just not
+  auto-detected — use the manual release path in `/app` for those.
+
 ## Roadmap
 
 - [x] Checkpoint 1 — project + idea (this repo)
 - [x] Checkpoint 2 — contracts + a full sponsor/maintainer/contributor site (`frontend/`) with GitHub-backed profiles, demoable end-to-end against a local chain
 - [x] Deployed live on Arc testnet — see [Live on Arc testnet](#live-on-arc-testnet) above; verified with a real fund → release cycle
-- [ ] Checkpoint 3 — remaining: GitHub-webhook oracle backend wired to `release`/`releaseIssue`/`withdraw` (currently triggered manually from `/app`), App Kit **Send** for sponsor deposits, demo video + deck
+- [x] Checkpoint 3 — GitHub-webhook oracle backend (`backend/`) wired to `release`/`releaseIssue`, verified end-to-end against a local deployment. Remaining: App Kit **Send** for sponsor deposits, demo video + deck
 - [ ] Post-hackathon — CCTP-based cross-chain funding (sponsor on Ethereum/Base, payout settles on Arc), Circle Wallets for contributor onboarding without a prior wallet
 
 ---

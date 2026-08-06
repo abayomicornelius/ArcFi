@@ -5,6 +5,7 @@ import { useAccount, useReadContract } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import { contracts } from "@/lib/contracts";
 import { useApproveAndSend, useTx } from "@/lib/hooks";
+import { registerBounty } from "@/lib/bounties";
 import { Card, Field, Input, Button, TxStatus, Pill, Skeleton } from "./ui";
 
 const STATUS_LABEL = ["None", "Funded", "Paid", "Refunded"] as const;
@@ -20,6 +21,9 @@ export function EscrowPanel() {
   const [deadline, setDeadline] = useState("");
   const [recipient, setRecipient] = useState("");
   const [newDeadline, setNewDeadline] = useState("");
+  const [githubOwner, setGithubOwner] = useState("");
+  const [githubRepo, setGithubRepo] = useState("");
+  const [githubIssueNumber, setGithubIssueNumber] = useState("");
 
   const fundTx = useApproveAndSend();
   const releaseTx = useTx();
@@ -45,7 +49,7 @@ export function EscrowPanel() {
     if (!issueIdBig || !deadline) return;
     const amountWei = parseUnits(amount || "0", 6);
     try {
-      await fundTx.send({
+      const txHash = await fundTx.send({
         token: contracts.usdc,
         spender: contracts.escrow.address,
         amount: amountWei,
@@ -58,6 +62,14 @@ export function EscrowPanel() {
         label: `Fund issue #${issueId}`,
       });
       refetch();
+      registerBounty({
+        contractType: "escrow",
+        onChainIssueId: issueId,
+        githubOwner,
+        githubRepo,
+        githubIssueNumber: Number(githubIssueNumber),
+        fundedTxHash: txHash,
+      });
     } catch {
       /* toast already reported */
     }
@@ -169,6 +181,26 @@ export function EscrowPanel() {
               <Input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
             </Field>
           </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            <Field label="GitHub owner" hint="Optional — links this to a real issue.">
+              <Input value={githubOwner} onChange={(e) => setGithubOwner(e.target.value)} placeholder="acme-oss" />
+            </Field>
+            <Field label="Repo">
+              <Input value={githubRepo} onChange={(e) => setGithubRepo(e.target.value)} placeholder="widget" />
+            </Field>
+            <Field label="Issue #">
+              <Input
+                value={githubIssueNumber}
+                onChange={(e) => setGithubIssueNumber(e.target.value)}
+                inputMode="numeric"
+                placeholder="1042"
+              />
+            </Field>
+          </div>
+          <p className="mt-2 text-xs text-ink-400">
+            Filling these in lets ArcFi&rsquo;s oracle release this bounty automatically the moment the linked PR
+            merges, instead of waiting on a manual release below.
+          </p>
           <Button
             className="mt-4"
             onClick={handleFund}

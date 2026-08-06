@@ -115,4 +115,9 @@ contract ArcFiMilestonesTest is Test {
 
         assertEq(usdc.balanceOf(contributor), contributorBalanceBefore, "released funds are untouched by cancel");
     }
+
+    function test_constructor_revertsOnFeeBpsOver10000() public {
+        vm.expectRevert(ArcFiMilestones.InvalidFeeBps.selector);
+        new ArcFiMilestones(address(usdc), admin, treasury, 10_001);
+    }
 }

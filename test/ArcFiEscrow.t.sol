@@ -192,4 +192,9 @@ contract ArcFiEscrowTest is Test {
         assertEq(usdc.balanceOf(alice) + usdc.balanceOf(bob) + usdc.balanceOf(treasury), amount - fee + fee);
         assertEq(usdc.balanceOf(alice) + usdc.balanceOf(bob), amount - fee);
     }
+
+    function test_constructor_revertsOnFeeBpsOver10000() public {
+        vm.expectRevert(ArcFiEscrow.InvalidFeeBps.selector);
+        new ArcFiEscrow(address(usdc), admin, treasury, 10_001);
+    }
 }

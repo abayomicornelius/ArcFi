@@ -67,3 +67,24 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+// Links a GitHub issue to the on-chain funding event that backs it, so the
+// oracle backend can find "is this issue funded, and by which contract/id"
+// when a linked PR merges.
+model Bounty {
+  id                String   @id @default(cuid())
+  contractType      String // "escrow" | "milestone"
+  onChainIssueId    String
+  milestoneId       String?
+  githubOwner       String
+  githubRepo        String
+  githubIssueNumber Int
+  status            String   @default("funded") // funded | released | pending_recipient | refunded
+  fundedTxHash      String?
+  releaseTxHash     String?
+  createdByUserId   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([githubOwner, githubRepo, githubIssueNumber, status])
+}

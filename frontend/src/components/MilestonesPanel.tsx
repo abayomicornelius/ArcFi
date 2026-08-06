@@ -5,6 +5,7 @@ import { useAccount, useReadContract } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import { contracts } from "@/lib/contracts";
 import { useApproveAndSend, useTx } from "@/lib/hooks";
+import { registerBounty } from "@/lib/bounties";
 import { Card, Field, Input, Button, TxStatus, Pill } from "./ui";
 
 const ISSUE_STATUS_LABEL = ["None", "Allocated", "Released"] as const;
@@ -17,6 +18,9 @@ export function MilestonesPanel() {
   const [allocAmount, setAllocAmount] = useState("");
   const [releaseIssueId, setReleaseIssueId] = useState("");
   const [recipient, setRecipient] = useState("");
+  const [githubOwner, setGithubOwner] = useState("");
+  const [githubRepo, setGithubRepo] = useState("");
+  const [githubIssueNumber, setGithubIssueNumber] = useState("");
 
   const createTx = useApproveAndSend();
   const allocateTx = useTx();
@@ -71,7 +75,7 @@ export function MilestonesPanel() {
   async function handleAllocate() {
     if (!milestoneIdBig || !allocIssueId || !allocAmount) return;
     try {
-      await allocateTx.send(
+      const txHash = await allocateTx.send(
         {
           address: contracts.milestones.address,
           abi: contracts.milestones.abi,
@@ -81,6 +85,15 @@ export function MilestonesPanel() {
         `Allocate issue #${allocIssueId}`,
       );
       refetchMilestone();
+      registerBounty({
+        contractType: "milestone",
+        onChainIssueId: allocIssueId,
+        milestoneId,
+        githubOwner,
+        githubRepo,
+        githubIssueNumber: Number(githubIssueNumber),
+        fundedTxHash: txHash,
+      });
     } catch {
       /* toast already reported */
     }
@@ -183,6 +196,26 @@ export function MilestonesPanel() {
               <Input value={allocAmount} onChange={(e) => setAllocAmount(e.target.value)} inputMode="decimal" />
             </Field>
           </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            <Field label="GitHub owner" hint="Optional — links this to a real issue.">
+              <Input value={githubOwner} onChange={(e) => setGithubOwner(e.target.value)} placeholder="acme-oss" />
+            </Field>
+            <Field label="Repo">
+              <Input value={githubRepo} onChange={(e) => setGithubRepo(e.target.value)} placeholder="widget" />
+            </Field>
+            <Field label="Issue #">
+              <Input
+                value={githubIssueNumber}
+                onChange={(e) => setGithubIssueNumber(e.target.value)}
+                inputMode="numeric"
+                placeholder="1042"
+              />
+            </Field>
+          </div>
+          <p className="mt-2 text-xs text-ink-400">
+            Filling these in lets ArcFi&rsquo;s oracle release this issue automatically the moment the linked PR
+            merges.
+          </p>
           <Button
             variant="secondary"
             className="mt-4"
