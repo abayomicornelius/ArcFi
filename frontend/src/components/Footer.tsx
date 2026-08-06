@@ -36,7 +36,7 @@ export function Footer() {
           <div>
             <div className="flex items-center gap-2">
               <Logo size={28} />
-              <span className="text-sm font-semibold text-ink-900">ArcFi</span>
+              <span className="font-display text-sm font-semibold text-ink-900">ArcFi</span>
             </div>
             <p className="mt-3 max-w-xs text-sm text-ink-500">
               Programmable USDC escrow, milestone, and maintenance-pool payouts for open-source funding, built on Arc.
