@@ -5,7 +5,7 @@ import { useAccount, useReadContract } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import { contracts } from "@/lib/contracts";
 import { useApproveAndSend, useTx } from "@/lib/hooks";
-import { Card, Field, Input, Button, TxStatus, Pill } from "./ui";
+import { Card, Field, Input, Button, TxStatus, Pill, Skeleton } from "./ui";
 
 const STATUS_LABEL = ["None", "Funded", "Paid", "Refunded"] as const;
 
@@ -28,7 +28,7 @@ export function EscrowPanel() {
 
   const issueIdBig = issueId ? BigInt(issueId) : undefined;
 
-  const { data: escrow, refetch } = useReadContract({
+  const { data: escrow, isLoading: escrowLoading, refetch } = useReadContract({
     address: contracts.escrow.address,
     abi: contracts.escrow.abi,
     functionName: "getEscrow",
@@ -44,51 +44,77 @@ export function EscrowPanel() {
   async function handleFund() {
     if (!issueIdBig || !deadline) return;
     const amountWei = parseUnits(amount || "0", 6);
-    await fundTx.send({
-      token: contracts.usdc,
-      spender: contracts.escrow.address,
-      amount: amountWei,
-      action: {
-        address: contracts.escrow.address,
-        abi: contracts.escrow.abi,
-        functionName: "fund",
-        args: [issueIdBig, amountWei, toUnixSeconds(deadline)],
-      },
-    });
-    refetch();
+    try {
+      await fundTx.send({
+        token: contracts.usdc,
+        spender: contracts.escrow.address,
+        amount: amountWei,
+        action: {
+          address: contracts.escrow.address,
+          abi: contracts.escrow.abi,
+          functionName: "fund",
+          args: [issueIdBig, amountWei, toUnixSeconds(deadline)],
+        },
+        label: `Fund issue #${issueId}`,
+      });
+      refetch();
+    } catch {
+      /* toast already reported */
+    }
   }
 
   async function handleRelease() {
     if (!issueIdBig || !recipient) return;
-    await releaseTx.send({
-      address: contracts.escrow.address,
-      abi: contracts.escrow.abi,
-      functionName: "release",
-      args: [issueIdBig, [{ account: recipient, bps: 10_000 }]],
-    });
-    refetch();
+    try {
+      await releaseTx.send(
+        {
+          address: contracts.escrow.address,
+          abi: contracts.escrow.abi,
+          functionName: "release",
+          args: [issueIdBig, [{ account: recipient, bps: 10_000 }]],
+        },
+        `Release issue #${issueId}`,
+      );
+      refetch();
+    } catch {
+      /* toast already reported */
+    }
   }
 
   async function handleRefund() {
     if (!issueIdBig) return;
-    await refundTx.send({
-      address: contracts.escrow.address,
-      abi: contracts.escrow.abi,
-      functionName: "refund",
-      args: [issueIdBig],
-    });
-    refetch();
+    try {
+      await refundTx.send(
+        {
+          address: contracts.escrow.address,
+          abi: contracts.escrow.abi,
+          functionName: "refund",
+          args: [issueIdBig],
+        },
+        `Refund issue #${issueId}`,
+      );
+      refetch();
+    } catch {
+      /* toast already reported */
+    }
   }
 
   async function handleExtend() {
     if (!issueIdBig || !newDeadline) return;
-    await extendTx.send({
-      address: contracts.escrow.address,
-      abi: contracts.escrow.abi,
-      functionName: "extendDeadline",
-      args: [issueIdBig, toUnixSeconds(newDeadline)],
-    });
-    refetch();
+    try {
+      await extendTx.send(
+        {
+          address: contracts.escrow.address,
+          abi: contracts.escrow.abi,
+          functionName: "extendDeadline",
+          args: [issueIdBig, toUnixSeconds(newDeadline)],
+        },
+        `Extend issue #${issueId} deadline`,
+      );
+      refetch();
+    } catch {
+      /* toast already reported */
+    }
   }
 
   return (
@@ -100,7 +126,15 @@ export function EscrowPanel() {
           <Input value={issueId} onChange={(e) => setIssueId(e.target.value)} placeholder="e.g. 1042" inputMode="numeric" />
         </Field>
 
-        {escrowData && status && (
+        {escrowLoading && (
+          <div className="mt-4 space-y-3 rounded-xl bg-ink-50 p-4">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+        )}
+
+        {!escrowLoading && escrowData && status && (
           <div className="mt-4 space-y-2 rounded-xl bg-ink-50 p-4 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-ink-500">Status</span>
@@ -135,7 +169,12 @@ export function EscrowPanel() {
               <Input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
             </Field>
           </div>
-          <Button className="mt-4" onClick={handleFund} disabled={!isConnected || fundTx.state === "pending" || fundTx.state === "confirming"}>
+          <Button
+            className="mt-4"
+            onClick={handleFund}
+            loading={fundTx.state === "pending" || fundTx.state === "confirming"}
+            disabled={!isConnected || fundTx.state === "pending" || fundTx.state === "confirming"}
+          >
             {fundTx.state === "pending" ? "Approving…" : fundTx.state === "confirming" ? "Funding…" : "Approve & Fund"}
           </Button>
           <TxStatus {...fundTx} />
@@ -148,10 +187,19 @@ export function EscrowPanel() {
           </Field>
           <p className="mt-2 text-xs text-ink-400">Only the configured admin/oracle address can call this.</p>
           <div className="mt-4 flex gap-3">
-            <Button onClick={handleRelease} disabled={!isConnected || releaseTx.state === "pending" || releaseTx.state === "confirming"}>
+            <Button
+              onClick={handleRelease}
+              loading={releaseTx.state === "pending" || releaseTx.state === "confirming"}
+              disabled={!isConnected || releaseTx.state === "pending" || releaseTx.state === "confirming"}
+            >
               Release payout
             </Button>
-            <Button variant="danger" onClick={handleRefund} disabled={!isConnected || refundTx.state === "pending" || refundTx.state === "confirming"}>
+            <Button
+              variant="danger"
+              onClick={handleRefund}
+              loading={refundTx.state === "pending" || refundTx.state === "confirming"}
+              disabled={!isConnected || refundTx.state === "pending" || refundTx.state === "confirming"}
+            >
               Refund
             </Button>
           </div>
@@ -164,7 +212,13 @@ export function EscrowPanel() {
           <Field label="New deadline" hint="Must be later than the current deadline.">
             <Input type="datetime-local" value={newDeadline} onChange={(e) => setNewDeadline(e.target.value)} />
           </Field>
-          <Button variant="secondary" className="mt-4" onClick={handleExtend} disabled={!isConnected || extendTx.state === "pending" || extendTx.state === "confirming"}>
+          <Button
+            variant="secondary"
+            className="mt-4"
+            onClick={handleExtend}
+            loading={extendTx.state === "pending" || extendTx.state === "confirming"}
+            disabled={!isConnected || extendTx.state === "pending" || extendTx.state === "confirming"}
+          >
             Extend
           </Button>
           <TxStatus {...extendTx} />

@@ -1,3 +1,4 @@
+import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import type { TxState } from "@/lib/hooks";
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -38,8 +39,10 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
 export function Button({
   variant = "primary",
   className = "",
+  loading = false,
+  children,
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "danger" }) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "danger"; loading?: boolean }) {
   const styles = {
     primary: "bg-usdc-500 text-white hover:bg-usdc-600 disabled:bg-ink-200 disabled:text-ink-400",
     secondary: "bg-ink-900 text-white hover:bg-ink-700 disabled:bg-ink-200 disabled:text-ink-400",
@@ -49,32 +52,32 @@ export function Button({
   return (
     <button
       {...props}
-      className={`rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed ${styles} ${className}`}
-    />
+      className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed ${styles} ${className}`}
+    >
+      {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+      {children}
+    </button>
   );
 }
 
 export function TxStatus({ state, error, hash }: { state: TxState; error: string | null; hash: string | null }) {
   if (state === "idle") return null;
 
-  const map: Record<TxState, { label: string; className: string }> = {
-    idle: { label: "", className: "" },
-    pending: { label: "Confirm in wallet…", className: "text-ink-500" },
-    confirming: { label: "Waiting for confirmation…", className: "text-usdc-600" },
-    success: { label: "Confirmed", className: "text-emerald-600" },
-    error: { label: error ?? "Transaction failed", className: "text-red-600" },
+  const config: Record<Exclude<TxState, "idle">, { label: string; className: string; icon: React.ComponentType<{ className?: string }> }> = {
+    pending: { label: "Confirm in wallet…", className: "text-ink-500", icon: Loader2 },
+    confirming: { label: "Waiting for confirmation…", className: "text-usdc-600", icon: Loader2 },
+    success: { label: "Confirmed", className: "text-emerald-600", icon: CheckCircle2 },
+    error: { label: error ?? "Transaction failed", className: "text-red-600", icon: XCircle },
   };
 
-  const { label, className } = map[state];
+  const { label, className, icon: Icon } = config[state];
+  const spinning = state === "pending" || state === "confirming";
 
   return (
-    <p className={`mt-2 text-xs ${className}`}>
-      {label}
-      {hash && state !== "pending" && (
-        <span className="ml-1 font-mono text-ink-400">
-          {hash.slice(0, 10)}…{hash.slice(-8)}
-        </span>
-      )}
+    <p className={`mt-2.5 flex items-center gap-1.5 text-xs ${className}`}>
+      <Icon className={`h-3.5 w-3.5 shrink-0 ${spinning ? "animate-spin" : ""}`} />
+      <span>{label}</span>
+      {hash && !spinning && <span className="font-mono text-ink-400">{hash.slice(0, 10)}…{hash.slice(-8)}</span>}
     </p>
   );
 }
@@ -86,4 +89,8 @@ export function Pill({ children, tone = "neutral" }: { children: React.ReactNode
     warn: "bg-amber-100 text-amber-700",
   }[tone];
   return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${styles}`}>{children}</span>;
+}
+
+export function Skeleton({ className = "" }: { className?: string }) {
+  return <span className={`inline-block animate-pulse rounded bg-ink-100 ${className}`} />;
 }

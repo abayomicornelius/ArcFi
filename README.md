@@ -6,9 +6,9 @@ Built for the **Arc DeFi Track** — [Programmable Money Accelerator](https://ww
 
 ## The idea
 
-Open-source maintenance is chronically underfunded, and the funding that does exist is slow: a sponsor wires money to a foundation, a maintainer files paperwork, a contributor waits weeks to get paid for a merged PR. [MergeFi](https://github.com/MergeFi) prototyped a fix for this on Stellar — hold sponsor funds in escrow, release them automatically when a linked GitHub PR merges, split team payouts by basis points, and keep an always-open "maintenance pool" for ongoing repo upkeep.
+Open-source maintenance is chronically underfunded, and the funding that does exist is slow: a sponsor wires money to a foundation, a maintainer files paperwork, a contributor waits weeks to get paid for a merged PR.
 
-**ArcFi ports that idea to Arc**, Circle's stablecoin-native L1 — denominating every escrow, milestone, and pool balance directly in USDC instead of an arbitrary token, using Arc's sub-second settlement so a payout is final by the time a contributor refreshes their wallet. It's a concrete example of "programmable money": funds move only when a specific, verifiable condition (a PR merge, attested to by an oracle) is met, not on a human's schedule.
+**ArcFi fixes this natively on Arc**, Circle's stablecoin-native L1 — sponsor funds sit in escrow denominated directly in USDC, and release automatically the moment a linked GitHub PR merges, split by basis points across a team, with an always-open maintenance pool for ongoing repo upkeep. Arc's sub-second settlement means a payout is final by the time a contributor refreshes their wallet. It's a concrete example of "programmable money": funds move only when a specific, verifiable condition (a PR merge, attested to by an oracle) is met, not on a human's schedule.
 
 ### Why this fits the DeFi track
 
@@ -22,7 +22,7 @@ Open-source maintenance is chronically underfunded, and the funding that does ex
 
 ## Architecture
 
-Three independent contracts, one per funding lifecycle — mirroring MergeFi's reasoning for keeping these separate rather than one bloated contract: an escrow is single-issue/single-payout/deadline-bound, a milestone is a lump sum sliced across a release, and a maintenance pool is open-ended and never "finishes."
+Three independent contracts, one per funding lifecycle, rather than one bloated contract: an escrow is single-issue/single-payout/deadline-bound, a milestone is a lump sum sliced across a release, and a maintenance pool is open-ended and never "finishes."
 
 ```
 src/
@@ -121,10 +121,6 @@ To point it at Arc testnet instead, deploy with `script/Deploy.s.sol` (see above
 - [ ] Deploy to Arc testnet once a testnet USDC address is sourced
 - [ ] Checkpoint 3 — functional MVP: GitHub-webhook oracle backend wired to `release`/`releaseIssue`/`withdraw`, App Kit **Send** for sponsor deposits, demo video + deck
 - [ ] Post-hackathon — CCTP-based cross-chain funding (sponsor on Ethereum/Base, payout settles on Arc), Circle Wallets for contributor onboarding without a prior wallet
-
-## Credit
-
-Contract design and product concept adapted from [MergeFi](https://github.com/MergeFi)'s Soroban contracts (`mergefi-escrow`, `mergefi-milestones`, `mergefi-maintenance-pool`), rewritten in Solidity and rewired for Arc/USDC.
 
 ---
 

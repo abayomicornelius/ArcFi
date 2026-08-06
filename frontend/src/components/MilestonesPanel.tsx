@@ -49,51 +49,77 @@ export function MilestonesPanel() {
   async function handleCreate() {
     if (!milestoneIdBig) return;
     const amountWei = parseUnits(budget || "0", 6);
-    await createTx.send({
-      token: contracts.usdc,
-      spender: contracts.milestones.address,
-      amount: amountWei,
-      action: {
-        address: contracts.milestones.address,
-        abi: contracts.milestones.abi,
-        functionName: "createMilestone",
-        args: [milestoneIdBig, amountWei],
-      },
-    });
-    refetchMilestone();
+    try {
+      await createTx.send({
+        token: contracts.usdc,
+        spender: contracts.milestones.address,
+        amount: amountWei,
+        action: {
+          address: contracts.milestones.address,
+          abi: contracts.milestones.abi,
+          functionName: "createMilestone",
+          args: [milestoneIdBig, amountWei],
+        },
+        label: `Create milestone #${milestoneId}`,
+      });
+      refetchMilestone();
+    } catch {
+      /* toast already reported */
+    }
   }
 
   async function handleAllocate() {
     if (!milestoneIdBig || !allocIssueId || !allocAmount) return;
-    await allocateTx.send({
-      address: contracts.milestones.address,
-      abi: contracts.milestones.abi,
-      functionName: "allocate",
-      args: [milestoneIdBig, BigInt(allocIssueId), parseUnits(allocAmount, 6)],
-    });
-    refetchMilestone();
+    try {
+      await allocateTx.send(
+        {
+          address: contracts.milestones.address,
+          abi: contracts.milestones.abi,
+          functionName: "allocate",
+          args: [milestoneIdBig, BigInt(allocIssueId), parseUnits(allocAmount, 6)],
+        },
+        `Allocate issue #${allocIssueId}`,
+      );
+      refetchMilestone();
+    } catch {
+      /* toast already reported */
+    }
   }
 
   async function handleRelease() {
     if (!milestoneIdBig || !releaseIssueId || !recipient) return;
-    await releaseTx.send({
-      address: contracts.milestones.address,
-      abi: contracts.milestones.abi,
-      functionName: "releaseIssue",
-      args: [milestoneIdBig, BigInt(releaseIssueId), [{ account: recipient, bps: 10_000 }]],
-    });
-    refetchMilestone();
+    try {
+      await releaseTx.send(
+        {
+          address: contracts.milestones.address,
+          abi: contracts.milestones.abi,
+          functionName: "releaseIssue",
+          args: [milestoneIdBig, BigInt(releaseIssueId), [{ account: recipient, bps: 10_000 }]],
+        },
+        `Release issue #${releaseIssueId}`,
+      );
+      refetchMilestone();
+    } catch {
+      /* toast already reported */
+    }
   }
 
   async function handleCancel() {
     if (!milestoneIdBig) return;
-    await cancelTx.send({
-      address: contracts.milestones.address,
-      abi: contracts.milestones.abi,
-      functionName: "cancelMilestone",
-      args: [milestoneIdBig],
-    });
-    refetchMilestone();
+    try {
+      await cancelTx.send(
+        {
+          address: contracts.milestones.address,
+          abi: contracts.milestones.abi,
+          functionName: "cancelMilestone",
+          args: [milestoneIdBig],
+        },
+        `Cancel milestone #${milestoneId}`,
+      );
+      refetchMilestone();
+    } catch {
+      /* toast already reported */
+    }
   }
 
   return (
@@ -136,7 +162,12 @@ export function MilestonesPanel() {
           <Field label="Total budget (USDC)">
             <Input value={budget} onChange={(e) => setBudget(e.target.value)} inputMode="decimal" />
           </Field>
-          <Button className="mt-4" onClick={handleCreate} disabled={!isConnected || createTx.state === "pending" || createTx.state === "confirming"}>
+          <Button
+            className="mt-4"
+            onClick={handleCreate}
+            loading={createTx.state === "pending" || createTx.state === "confirming"}
+            disabled={!isConnected || createTx.state === "pending" || createTx.state === "confirming"}
+          >
             {createTx.state === "pending" ? "Approving…" : createTx.state === "confirming" ? "Creating…" : "Approve & Create"}
           </Button>
           <TxStatus {...createTx} />
@@ -152,7 +183,13 @@ export function MilestonesPanel() {
               <Input value={allocAmount} onChange={(e) => setAllocAmount(e.target.value)} inputMode="decimal" />
             </Field>
           </div>
-          <Button variant="secondary" className="mt-4" onClick={handleAllocate} disabled={!isConnected || allocateTx.state === "pending" || allocateTx.state === "confirming"}>
+          <Button
+            variant="secondary"
+            className="mt-4"
+            onClick={handleAllocate}
+            loading={allocateTx.state === "pending" || allocateTx.state === "confirming"}
+            disabled={!isConnected || allocateTx.state === "pending" || allocateTx.state === "confirming"}
+          >
             Allocate
           </Button>
           <TxStatus {...allocateTx} />
@@ -169,10 +206,19 @@ export function MilestonesPanel() {
             </Field>
           </div>
           <div className="mt-4 flex gap-3">
-            <Button onClick={handleRelease} disabled={!isConnected || releaseTx.state === "pending" || releaseTx.state === "confirming"}>
+            <Button
+              onClick={handleRelease}
+              loading={releaseTx.state === "pending" || releaseTx.state === "confirming"}
+              disabled={!isConnected || releaseTx.state === "pending" || releaseTx.state === "confirming"}
+            >
               Release payout
             </Button>
-            <Button variant="danger" onClick={handleCancel} disabled={!isConnected || cancelTx.state === "pending" || cancelTx.state === "confirming"}>
+            <Button
+              variant="danger"
+              onClick={handleCancel}
+              loading={cancelTx.state === "pending" || cancelTx.state === "confirming"}
+              disabled={!isConnected || cancelTx.state === "pending" || cancelTx.state === "confirming"}
+            >
               Cancel milestone
             </Button>
           </div>

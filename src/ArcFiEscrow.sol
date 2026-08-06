@@ -11,11 +11,9 @@ import {Splits} from "./libraries/Splits.sol";
 /// ArcFi's off-chain oracle (watching GitHub webhooks for the linked PR
 /// merging) releases the funds to the contributor(s), split by basis points
 /// for team bounties, minus a protocol fee to the treasury.
-/// @dev Ported from MergeFi's Soroban `mergefi-escrow` contract onto Arc,
-/// denominated in USDC instead of an arbitrary SEP-41 token. Unlike the
-/// Soroban version, `admin`/`treasury`/`feeBps` are set once in the
-/// constructor rather than via a separate `initialize` call, which removes
-/// the admin-front-running race the original design had to document around.
+/// @dev `admin`/`treasury`/`feeBps` are set once in the constructor rather
+/// than via a separate `initialize` call, so there's no window between
+/// deployment and configuration for an admin-front-running race.
 contract ArcFiEscrow is ReentrancyGuard {
     using SafeERC20 for IERC20;
 

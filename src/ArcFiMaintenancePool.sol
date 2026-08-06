@@ -10,9 +10,8 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 /// one issue. Sponsors can deposit repeatedly; ArcFi's oracle authorizes
 /// maintainer draw-downs against off-chain-adjudicated maintenance credit
 /// (not tied to any single PR merge, unlike escrow/milestones).
-/// @dev Ported from MergeFi's Soroban `mergefi-maintenance-pool` contract.
-/// `poolId` is an off-chain-assigned identifier for a repo/org (e.g. a hash
-/// of `owner/repo`), not tied to any single issue.
+/// @dev `poolId` is an off-chain-assigned identifier for a repo/org (e.g. a
+/// hash of `owner/repo`), not tied to any single issue.
 contract ArcFiMaintenancePool is ReentrancyGuard {
     using SafeERC20 for IERC20;
 

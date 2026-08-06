@@ -3,8 +3,21 @@
 import { useCallback, useState } from "react";
 import { useWriteContract, usePublicClient, useAccount } from "wagmi";
 import type { Address, Abi } from "viem";
+import { toast } from "sonner";
 
 export type TxState = "idle" | "pending" | "confirming" | "success" | "error";
+
+function shortHash(hash: string) {
+  return `${hash.slice(0, 10)}…${hash.slice(-8)}`;
+}
+
+function errorMessage(err: unknown) {
+  if (err instanceof Error) {
+    // wagmi/viem errors often have a long "Details:" / "Docs:" tail — keep the first line.
+    return err.message.split("\n")[0].slice(0, 140);
+  }
+  return "Transaction failed";
+}
 
 /**
  * Wraps a single contract write in submit -> mined lifecycle state, since
@@ -19,21 +32,26 @@ export function useTx() {
   const [hash, setHash] = useState<`0x${string}` | null>(null);
 
   const send = useCallback(
-    async (params: Parameters<typeof writeContractAsync>[0]) => {
+    async (params: Parameters<typeof writeContractAsync>[0], label = "Transaction") => {
+      const toastId = toast.loading(`${label} — confirm in wallet…`);
       setState("pending");
       setError(null);
       try {
         const txHash = await writeContractAsync(params);
         setHash(txHash);
         setState("confirming");
+        toast.loading(`${label} — waiting for confirmation…`, { id: toastId, description: shortHash(txHash) });
         if (publicClient) {
           await publicClient.waitForTransactionReceipt({ hash: txHash });
         }
         setState("success");
+        toast.success(`${label} confirmed`, { id: toastId, description: shortHash(txHash) });
         return txHash;
       } catch (err) {
         setState("error");
-        setError(err instanceof Error ? err.message : "Transaction failed");
+        const message = errorMessage(err);
+        setError(message);
+        toast.error(`${label} failed`, { id: toastId, description: message });
         throw err;
       }
     },
@@ -72,13 +90,19 @@ export function useApproveAndSend() {
       spender,
       amount,
       action,
+      label = "Transaction",
     }: {
       token: { address: Address; abi: Abi };
       spender: Address;
       amount: bigint;
       action: Parameters<typeof writeContractAsync>[0];
+      label?: string;
     }) => {
-      if (!address || !publicClient) throw new Error("Connect a wallet first");
+      if (!address || !publicClient) {
+        toast.error("Connect a wallet first");
+        throw new Error("Connect a wallet first");
+      }
+      const toastId = toast.loading(`${label} — checking USDC allowance…`);
       setState("pending");
       setError(null);
       try {
@@ -90,24 +114,31 @@ export function useApproveAndSend() {
         })) as bigint;
 
         if (allowance < amount) {
+          toast.loading(`${label} — approve USDC in wallet…`, { id: toastId });
           const approveHash = await writeContractAsync({
             address: token.address,
             abi: token.abi,
             functionName: "approve",
             args: [spender, amount],
           });
+          toast.loading(`${label} — confirming approval…`, { id: toastId, description: shortHash(approveHash) });
           await publicClient.waitForTransactionReceipt({ hash: approveHash });
         }
 
         setState("confirming");
+        toast.loading(`${label} — confirm in wallet…`, { id: toastId });
         const txHash = await writeContractAsync(action);
         setHash(txHash);
+        toast.loading(`${label} — waiting for confirmation…`, { id: toastId, description: shortHash(txHash) });
         await publicClient.waitForTransactionReceipt({ hash: txHash });
         setState("success");
+        toast.success(`${label} confirmed`, { id: toastId, description: shortHash(txHash) });
         return txHash;
       } catch (err) {
         setState("error");
-        setError(err instanceof Error ? err.message : "Transaction failed");
+        const message = errorMessage(err);
+        setError(message);
+        toast.error(`${label} failed`, { id: toastId, description: message });
         throw err;
       }
     },

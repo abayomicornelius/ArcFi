@@ -34,29 +34,41 @@ export function MaintenancePoolPanel() {
   async function handleDeposit() {
     if (!poolIdBig) return;
     const amountWei = parseUnits(depositAmount || "0", 6);
-    await depositTx.send({
-      token: contracts.usdc,
-      spender: contracts.maintenancePool.address,
-      amount: amountWei,
-      action: {
-        address: contracts.maintenancePool.address,
-        abi: contracts.maintenancePool.abi,
-        functionName: "deposit",
-        args: [poolIdBig, amountWei],
-      },
-    });
-    refetch();
+    try {
+      await depositTx.send({
+        token: contracts.usdc,
+        spender: contracts.maintenancePool.address,
+        amount: amountWei,
+        action: {
+          address: contracts.maintenancePool.address,
+          abi: contracts.maintenancePool.abi,
+          functionName: "deposit",
+          args: [poolIdBig, amountWei],
+        },
+        label: `Deposit to pool #${poolId}`,
+      });
+      refetch();
+    } catch {
+      /* toast already reported */
+    }
   }
 
   async function handleWithdraw() {
     if (!poolIdBig || !withdrawRecipient || !withdrawAmount) return;
-    await withdrawTx.send({
-      address: contracts.maintenancePool.address,
-      abi: contracts.maintenancePool.abi,
-      functionName: "withdraw",
-      args: [poolIdBig, withdrawRecipient, parseUnits(withdrawAmount, 6)],
-    });
-    refetch();
+    try {
+      await withdrawTx.send(
+        {
+          address: contracts.maintenancePool.address,
+          abi: contracts.maintenancePool.abi,
+          functionName: "withdraw",
+          args: [poolIdBig, withdrawRecipient, parseUnits(withdrawAmount, 6)],
+        },
+        `Withdraw from pool #${poolId}`,
+      );
+      refetch();
+    } catch {
+      /* toast already reported */
+    }
   }
 
   return (
@@ -100,7 +112,12 @@ export function MaintenancePoolPanel() {
           <Field label="Amount (USDC)">
             <Input value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} inputMode="decimal" />
           </Field>
-          <Button className="mt-4" onClick={handleDeposit} disabled={!isConnected || depositTx.state === "pending" || depositTx.state === "confirming"}>
+          <Button
+            className="mt-4"
+            onClick={handleDeposit}
+            loading={depositTx.state === "pending" || depositTx.state === "confirming"}
+            disabled={!isConnected || depositTx.state === "pending" || depositTx.state === "confirming"}
+          >
             {depositTx.state === "pending" ? "Approving…" : depositTx.state === "confirming" ? "Depositing…" : "Approve & Deposit"}
           </Button>
           <TxStatus {...depositTx} />
@@ -117,7 +134,13 @@ export function MaintenancePoolPanel() {
               <Input value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} inputMode="decimal" />
             </Field>
           </div>
-          <Button variant="secondary" className="mt-4" onClick={handleWithdraw} disabled={!isConnected || withdrawTx.state === "pending" || withdrawTx.state === "confirming"}>
+          <Button
+            variant="secondary"
+            className="mt-4"
+            onClick={handleWithdraw}
+            loading={withdrawTx.state === "pending" || withdrawTx.state === "confirming"}
+            disabled={!isConnected || withdrawTx.state === "pending" || withdrawTx.state === "confirming"}
+          >
             Withdraw
           </Button>
           <TxStatus {...withdrawTx} />

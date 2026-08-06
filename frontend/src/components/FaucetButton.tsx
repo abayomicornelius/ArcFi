@@ -31,13 +31,20 @@ export function FaucetButton() {
         className="!px-3 !py-1 text-xs"
         onClick={async () => {
           if (!address) return;
-          await mintTx.send({
-            address: contracts.usdc.address,
-            abi: contracts.usdc.abi,
-            functionName: "mint",
-            args: [address, parseUnits("10000", 6)],
-          });
-          refetch();
+          try {
+            await mintTx.send(
+              {
+                address: contracts.usdc.address,
+                abi: contracts.usdc.abi,
+                functionName: "mint",
+                args: [address, parseUnits("10000", 6)],
+              },
+              "Mint test USDC",
+            );
+            refetch();
+          } catch {
+            /* toast already reported */
+          }
         }}
         disabled={mintTx.state === "pending" || mintTx.state === "confirming"}
       >

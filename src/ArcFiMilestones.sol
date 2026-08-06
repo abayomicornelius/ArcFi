@@ -12,7 +12,6 @@ import {Splits} from "./libraries/Splits.sol";
 /// per-issue allocations as scope is agreed, and releases each allocation
 /// as its PR merges — multi-step settlement against a single upfront
 /// deposit instead of a fresh escrow per issue.
-/// @dev Ported from MergeFi's Soroban `mergefi-milestones` contract onto Arc.
 contract ArcFiMilestones is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
