@@ -7,6 +7,7 @@ import { GitBranch, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { ConnectButton } from "./ConnectButton";
 import { FaucetButton } from "./FaucetButton";
+import { Logo } from "./Logo";
 
 const LINKS = [
   { href: "/app", label: "App" },
@@ -25,7 +26,7 @@ export function NavBar() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-usdc-500 text-sm font-bold text-white">A</div>
+            <Logo size={30} />
             <span className="text-sm font-semibold text-ink-900">ArcFi</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">

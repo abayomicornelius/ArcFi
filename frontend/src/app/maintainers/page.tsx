@@ -14,7 +14,7 @@ export default async function MaintainersPage() {
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
       <div className="mb-8 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-usdc-50 text-usdc-600">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gold-50 text-gold-600">
           <Wrench className="h-5 w-5" />
         </div>
         <div>
@@ -45,12 +45,12 @@ export default async function MaintainersPage() {
 
       {maintainers.length === 0 ? (
         <p className="rounded-xl border border-dashed border-ink-200 p-10 text-center text-sm text-ink-400">
-          No repo maintainers registered yet — <a href="/onboarding" className="text-usdc-600 underline">set up a maintainer profile</a>.
+          No repo maintainers registered yet — <a href="/onboarding" className="text-gold-600 underline">set up a maintainer profile</a>.
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {maintainers.map((m) => (
-            <ProfileCard key={m.key} entry={m} />
+            <ProfileCard key={m.key} entry={m} accent="maintainer" />
           ))}
         </div>
       )}

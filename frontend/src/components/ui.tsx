@@ -82,13 +82,18 @@ export function TxStatus({ state, error, hash }: { state: TxState; error: string
   );
 }
 
-export function Pill({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "good" | "warn" }) {
-  const styles = {
+export type PillTone = "neutral" | "good" | "warn" | "sponsor" | "maintainer" | "contributor";
+
+export function Pill({ children, tone = "neutral" }: { children: React.ReactNode; tone?: PillTone }) {
+  const styles: Record<PillTone, string> = {
     neutral: "bg-ink-100 text-ink-600",
     good: "bg-emerald-100 text-emerald-700",
     warn: "bg-amber-100 text-amber-700",
-  }[tone];
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${styles}`}>{children}</span>;
+    sponsor: "bg-usdc-50 text-usdc-700",
+    maintainer: "bg-gold-50 text-gold-700",
+    contributor: "bg-emerald-50 text-emerald-700",
+  };
+  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${styles[tone]}`}>{children}</span>;
 }
 
 export function Skeleton({ className = "" }: { className?: string }) {

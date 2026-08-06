@@ -50,17 +50,17 @@ export default async function ProfilePage({ params }: { params: Promise<{ addres
       {user && (
         <div className="mb-6 flex flex-wrap gap-2">
           {user.isSponsor && (
-            <Pill tone="good">
+            <Pill tone="sponsor">
               <HandCoins className="mr-1 inline h-3 w-3" /> Sponsor
             </Pill>
           )}
           {user.isMaintainer && (
-            <Pill tone="warn">
+            <Pill tone="maintainer">
               <Wrench className="mr-1 inline h-3 w-3" /> Maintainer
             </Pill>
           )}
           {user.isContributor && (
-            <Pill>
+            <Pill tone="contributor">
               <Users className="mr-1 inline h-3 w-3" /> Contributor
             </Pill>
           )}

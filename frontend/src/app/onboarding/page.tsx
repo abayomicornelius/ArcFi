@@ -10,9 +10,30 @@ import { Card, Button, Field } from "@/components/ui";
 import { toast } from "sonner";
 
 const ROLES = [
-  { key: "isSponsor" as const, label: "Sponsor", blurb: "I fund issues, milestones, or maintenance pools.", icon: HandCoins },
-  { key: "isMaintainer" as const, label: "Maintainer", blurb: "I scope bounties and vouch for merged work on my repos.", icon: Wrench },
-  { key: "isContributor" as const, label: "Contributor", blurb: "I want to get paid in USDC for merged PRs.", icon: Users },
+  {
+    key: "isSponsor" as const,
+    label: "Sponsor",
+    blurb: "I fund issues, milestones, or maintenance pools.",
+    icon: HandCoins,
+    active: "border-usdc-400 bg-usdc-50",
+    iconActive: "text-usdc-600",
+  },
+  {
+    key: "isMaintainer" as const,
+    label: "Maintainer",
+    blurb: "I scope bounties and vouch for merged work on my repos.",
+    icon: Wrench,
+    active: "border-gold-400 bg-gold-50",
+    iconActive: "text-gold-600",
+  },
+  {
+    key: "isContributor" as const,
+    label: "Contributor",
+    blurb: "I want to get paid in USDC for merged PRs.",
+    icon: Users,
+    active: "border-emerald-400 bg-emerald-50",
+    iconActive: "text-emerald-600",
+  },
 ];
 
 type RoleFlags = { isSponsor: boolean; isMaintainer: boolean; isContributor: boolean };
@@ -121,13 +142,11 @@ function OnboardingForm({ user }: { user: Session["user"] }) {
               <button
                 key={role.key}
                 onClick={() => setRoles((r) => ({ ...r, [role.key]: !r[role.key] }))}
-                className={`rounded-xl border p-4 text-left transition ${
-                  active ? "border-usdc-400 bg-usdc-50" : "border-ink-200 bg-white hover:border-ink-300"
-                }`}
+                className={`rounded-xl border p-4 text-left transition ${active ? role.active : "border-ink-200 bg-white hover:border-ink-300"}`}
               >
                 <div className="mb-2 flex items-center justify-between">
-                  <role.icon className={`h-4 w-4 ${active ? "text-usdc-600" : "text-ink-400"}`} />
-                  {active && <Check className="h-4 w-4 text-usdc-600" />}
+                  <role.icon className={`h-4 w-4 ${active ? role.iconActive : "text-ink-400"}`} />
+                  {active && <Check className={`h-4 w-4 ${role.iconActive}`} />}
                 </div>
                 <p className="text-sm font-semibold text-ink-900">{role.label}</p>
                 <p className="mt-0.5 text-xs text-ink-500">{role.blurb}</p>

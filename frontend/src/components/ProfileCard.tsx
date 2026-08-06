@@ -8,14 +8,22 @@ function short(address: string) {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+const ACCENTS = {
+  sponsor: "hover:border-usdc-300",
+  maintainer: "hover:border-gold-400",
+  contributor: "hover:border-emerald-300",
+} as const;
+
 export function ProfileCard({
   entry,
   statLabel,
   statValue,
+  accent = "sponsor",
 }: {
   entry: DirectoryEntry;
   statLabel?: string;
   statValue?: bigint;
+  accent?: keyof typeof ACCENTS;
 }) {
   const displayName = entry.githubLogin ? `@${entry.githubLogin}` : entry.name ?? (entry.address ? short(entry.address) : "Anonymous");
   const href = entry.address ? `/profile/${entry.address}` : undefined;
@@ -51,7 +59,7 @@ export function ProfileCard({
     </>
   );
 
-  const cardClass = "block rounded-xl border border-ink-200 bg-paper-raised p-5 transition hover:border-usdc-300";
+  const cardClass = `block rounded-xl border border-ink-200 bg-paper-raised p-5 transition ${ACCENTS[accent]}`;
 
   return href ? (
     <Link href={href} className={cardClass}>

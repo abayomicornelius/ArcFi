@@ -22,12 +22,29 @@
   --color-ink-800: #262b38;
   --color-ink-900: #14181f;
 
+  /* Sponsor — USDC brand blue */
   --color-usdc-50: #e9f4ff;
   --color-usdc-100: #cde6ff;
   --color-usdc-400: #4a8fe0;
   --color-usdc-500: #2775ca;
   --color-usdc-600: #1e5fa8;
   --color-usdc-700: #174a83;
+
+  /* Maintainer — gold */
+  --color-gold-50: #fef8ec;
+  --color-gold-100: #fceecb;
+  --color-gold-400: #eeab2f;
+  --color-gold-500: #d98c0f;
+  --color-gold-600: #b06e08;
+  --color-gold-700: #8a560a;
+
+  /* Contributor uses Tailwind's stock emerald-* scale directly (no override,
+     avoids partially shadowing the default palette). */
+
+  /* Hero accent — violet, used only in the gradient mesh */
+  --color-violet-400: #9c7cf0;
+  --color-violet-500: #7c5ce0;
+  --color-violet-600: #5f3fc4;
 
   --color-paper: #f7f5f0;
   --color-paper-raised: #ffffff;
@@ -37,7 +54,22 @@ body {
   background: var(--color-paper);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(20, 24, 31, 0.06) 1px, transparent 0);
+  background-image: radial-gradient(circle at 1px 1px, rgba(20, 24, 31, 0.06) 1px, transparent 0);
   background-size: 24px 24px;
+}
+
+.hero-mesh {
+  background-color: #0e1420;
+  background-image:
+    radial-gradient(60% 60% at 15% 10%, rgba(124, 92, 224, 0.55), transparent 60%),
+    radial-gradient(50% 55% at 85% 0%, rgba(39, 117, 202, 0.55), transparent 60%),
+    radial-gradient(60% 60% at 50% 100%, rgba(21, 168, 112, 0.35), transparent 60%),
+    linear-gradient(180deg, #0e1420 0%, #0b0f18 100%);
+}
+
+.hero-grid {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 20%, black 40%, transparent 90%);
 }

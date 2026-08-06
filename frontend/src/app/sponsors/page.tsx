@@ -27,7 +27,7 @@ export default async function SponsorsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sponsors.map((s) => (
-            <ProfileCard key={s.key} entry={s} statLabel="Total funded" statValue={s.fundedUsdc} />
+            <ProfileCard key={s.key} entry={s} statLabel="Total funded" statValue={s.fundedUsdc} accent="sponsor" />
           ))}
         </div>
       )}
