@@ -1,0 +1,16 @@
+# Compiler files
+cache/
+out/
+
+# Dependencies (run `forge install` to fetch)
+lib/
+
+# Ignores local Anvil broadcast logs; keep testnet/mainnet deploy records
+broadcast/*/31337/
+
+# Dotenv file
+.env
+.env.local
+
+# macOS
+.DS_Store

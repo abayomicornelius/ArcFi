@@ -1,0 +1,119 @@
+# ArcFi
+
+**Programmable USDC payouts for open-source funding — sponsor a GitHub issue, pay out automatically the moment the fix ships, on [Arc](https://www.circle.com/arc).**
+
+Built for the **Arc DeFi Track** — [Programmable Money Accelerator](https://www.circle.com/arc) hackathon (Aug 2026 cohort).
+
+## The idea
+
+Open-source maintenance is chronically underfunded, and the funding that does exist is slow: a sponsor wires money to a foundation, a maintainer files paperwork, a contributor waits weeks to get paid for a merged PR. [MergeFi](https://github.com/MergeFi) prototyped a fix for this on Stellar — hold sponsor funds in escrow, release them automatically when a linked GitHub PR merges, split team payouts by basis points, and keep an always-open "maintenance pool" for ongoing repo upkeep.
+
+**ArcFi ports that idea to Arc**, Circle's stablecoin-native L1 — denominating every escrow, milestone, and pool balance directly in USDC instead of an arbitrary token, using Arc's sub-second settlement so a payout is final by the time a contributor refreshes their wallet. It's a concrete example of "programmable money": funds move only when a specific, verifiable condition (a PR merge, attested to by an oracle) is met, not on a human's schedule.
+
+### Why this fits the DeFi track
+
+| Arc DeFi track ask | What ArcFi does |
+|---|---|
+| Meaningful use of Arc & USDC | Every contract is denominated in USDC; Arc's USDC-as-gas model means the whole flow — deposit, gas, payout — never leaves the stablecoin |
+| Conditional payments | `release` / `releaseIssue` only pay out once the admin/oracle attests a PR merged; refunds are conditional on an explicit deadline |
+| Onchain automation | The oracle (ArcFi's backend, watching GitHub webhooks) is the only address authorized to trigger payouts — no manual multisig approval per bounty |
+| Multi-step settlement | Milestones reserve a budget once, then release it across many issues over time; maintenance pools accept indefinite recurring deposits and draw-downs |
+| Treasury / fintech infrastructure | A protocol fee (basis points) is swept to a treasury address on every payout, in the same transaction as the recipient payout — no separate sweep step to forget |
+
+## Architecture
+
+Three independent contracts, one per funding lifecycle — mirroring MergeFi's reasoning for keeping these separate rather than one bloated contract: an escrow is single-issue/single-payout/deadline-bound, a milestone is a lump sum sliced across a release, and a maintenance pool is open-ended and never "finishes."
+
+```
+src/
+├── ArcFiEscrow.sol           single-issue bounty escrow
+├── ArcFiMilestones.sol       lump-sum budget allocated across many issues
+├── ArcFiMaintenancePool.sol  recurring, open-ended repo/org funding
+├── libraries/
+│   └── Splits.sol            shared basis-point payout splitting (largest-remainder, no stranded dust)
+└── mocks/
+    └── MockUSDC.sol          6-decimal ERC20 stand-in for local tests
+```
+
+### `ArcFiEscrow` — single-issue bounty
+
+1. `fund(issueId, amount, deadline)` — sponsor deposits USDC for a specific issue. One escrow per issue; a second `fund` call reverts rather than silently topping it up, so terms can't change after the fact.
+2. `release(issueId, recipients)` — oracle-only, called once the linked PR merges. `recipients` is a list of `(address, bps)` pairs that must sum to exactly 10,000 bps (a single recipient at 10,000 bps covers the solo-payee case). The protocol fee is deducted first, then the remainder is split pro-rata with no rounding dust left behind.
+3. `refund(issueId)` — the oracle can force a refund any time (issue cancelled); **anyone** can trigger it once `deadline` passes. It always pays the original sponsor, never the caller, so this permissionless path removes the backend as a liveness dependency without opening a theft vector.
+4. `extendDeadline(issueId, newDeadline)` — only the sponsor, and only forward in time.
+
+### `ArcFiMilestones` — release-scoped budget
+
+1. `createMilestone(milestoneId, totalBudget)` — sponsor deposits once.
+2. `allocate(milestoneId, issueId, amount)` — oracle reserves a slice of the remaining budget for a specific issue as scope is agreed.
+3. `releaseIssue(milestoneId, issueId, recipients)` — same split/fee mechanics as escrow, drawing from the issue's pre-reserved allocation.
+4. `cancelMilestone(milestoneId)` — refunds whatever was never allocated back to the sponsor; already-released issues are untouched.
+
+### `ArcFiMaintenancePool` — ongoing repo funding
+
+1. `deposit(poolId, amount)` — any sponsor, any time, repeatedly. The pool is created implicitly on first deposit; every deposit is recorded so the full contribution history is queryable on-chain.
+2. `withdraw(poolId, recipient, amount)` — oracle-authorized maintainer draw-down for completed maintenance work. Not tied to a specific PR the way escrow/milestones are — this is "maintenance credit" adjudicated off-chain by the backend.
+
+### Security model
+
+- **Oracle authorization is immutable at deploy time.** `admin`, `treasury`, and `feeBps` are constructor arguments, not set via a separate `initialize()` call. This closes the admin-front-running race that the original Soroban design had to document a mitigation for — on Arc, deployment and configuration happen atomically.
+- **Sponsor funds can only be moved out by the sponsor's own action or the oracle's payout/refund logic** — never moved *in* without the sponsor's transaction.
+- **Every payout path is idempotent.** Escrows and milestone-issues carry an explicit status (`Funded → Paid | Refunded`, `Allocated → Released`); double-release and double-refund both revert, so a backend retry after a dropped transaction is always safe to resend.
+- **No stranded dust.** `Splits.allocate` uses largest-remainder rounding so `sum(shares) == amount` exactly, regardless of how many recipients split a bounty.
+- **Reentrancy-guarded, checks-effects-interactions throughout**, using OpenZeppelin's `SafeERC20` and `ReentrancyGuard`.
+
+## Arc network
+
+| | |
+|---|---|
+| Chain ID | `5042002` (testnet) |
+| RPC | `https://rpc.testnet.arc.io` |
+| Explorer | `https://testnet.arcscan.app` |
+| Gas / native currency | USDC |
+
+## Getting started
+
+```shell
+forge install               # pull forge-std + OpenZeppelin
+forge build
+forge test -vv
+```
+
+### Deploy to Arc testnet
+
+```shell
+export PRIVATE_KEY=0x...
+export USDC_ADDRESS=0x...       # USDC contract address on Arc testnet
+export ADMIN_ADDRESS=0x...      # ArcFi backend oracle address
+export TREASURY_ADDRESS=0x...
+export FEE_BPS=250              # optional, defaults to 250 (2.5%)
+
+forge script script/Deploy.s.sol --rpc-url arc_testnet --broadcast --verify
+```
+
+## Roadmap
+
+- [x] Checkpoint 1 — project + idea (this repo)
+- [ ] Checkpoint 2 — deployed testnet contracts + a minimal sponsor/maintainer UI
+- [ ] Checkpoint 3 — functional MVP: GitHub-webhook oracle backend wired to `release`/`releaseIssue`/`withdraw`, App Kit **Send** for sponsor deposits, demo video + deck
+- [ ] Post-hackathon — CCTP-based cross-chain funding (sponsor on Ethereum/Base, payout settles on Arc), Circle Wallets for contributor onboarding without a prior wallet
+
+## Credit
+
+Contract design and product concept adapted from [MergeFi](https://github.com/MergeFi)'s Soroban contracts (`mergefi-escrow`, `mergefi-milestones`, `mergefi-maintenance-pool`), rewritten in Solidity and rewired for Arc/USDC.
+
+---
+
+<details>
+<summary>Foundry tooling reference</summary>
+
+**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+
+- **Forge**: testing framework
+- **Cast**: CLI for interacting with EVM chains
+- **Anvil**: local Ethereum node
+- **Chisel**: Solidity REPL
+
+Docs: https://book.getfoundry.sh/
+
+</details>
