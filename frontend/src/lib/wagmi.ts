@@ -6,8 +6,11 @@ const chains = activeChain.id === arcTestnet.id ? ([arcTestnet, localAnvil] as c
 export const wagmiConfig = createConfig({
   chains,
   connectors: [injected()],
+  // Arc's public testnet RPC rate-limits aggressively; local Anvil doesn't
+  // care either way, so a conservative shared interval keeps both happy.
+  pollingInterval: 12_000,
   transports: {
-    [arcTestnet.id]: http(),
+    [arcTestnet.id]: http(undefined, { retryCount: 2, retryDelay: 2_000 }),
     [localAnvil.id]: http(),
   },
   ssr: true,

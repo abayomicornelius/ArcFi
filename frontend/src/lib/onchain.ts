@@ -1,5 +1,5 @@
 import "server-only";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, type Abi, type Address } from "viem";
 import { activeChain } from "./chains";
 import { contracts, isDeployed } from "./contracts";
 
@@ -18,21 +18,40 @@ type DecodedLog = {
   args: Record<string, unknown>;
 };
 
+// Public RPCs (Arc's included) cap how many blocks a single eth_getLogs call
+// can span, unlike local Anvil which has no such limit. Fetch backward in
+// small chunks and stop gracefully on the first failure (a stricter cap, a
+// rate limit, whatever) instead of crashing the whole page.
+const LOG_CHUNK_SIZE = 2_000n;
+const MAX_CHUNKS = 5;
+
+async function getRecentLogs(address: Address, abi: Abi): Promise<DecodedLog[]> {
+  const latest = await publicClient.getBlockNumber();
+  const allLogs: DecodedLog[] = [];
+  let toBlock = latest;
+
+  for (let i = 0; i < MAX_CHUNKS; i++) {
+    const fromBlock = toBlock > LOG_CHUNK_SIZE ? toBlock - LOG_CHUNK_SIZE + 1n : 0n;
+    try {
+      const logs = await publicClient.getContractEvents({ address, abi, fromBlock, toBlock });
+      allLogs.push(...(logs as unknown as DecodedLog[]));
+    } catch {
+      break;
+    }
+    if (fromBlock === 0n) break;
+    toBlock = fromBlock - 1n;
+  }
+
+  return allLogs;
+}
+
 async function getLogsFor(kind: "escrow" | "milestones" | "pool") {
   const source =
     kind === "escrow" ? contracts.escrow : kind === "milestones" ? contracts.milestones : contracts.maintenancePool;
-  const latest = await publicClient.getBlockNumber();
-  const fromBlock = latest > 50_000n ? latest - 50_000n : 0n;
-  const logs = await publicClient.getContractEvents({
-    address: source.address,
-    abi: source.abi,
-    fromBlock,
-    toBlock: "latest",
-  });
-  return logs as unknown as DecodedLog[];
+  return getRecentLogs(source.address, source.abi);
 }
 
-/** Scans every ArcFi contract's event history and buckets USDC flow per address. */
+/** Scans every ArcFi contract's recent event history and buckets USDC flow per address. */
 export async function getAllParticipants(): Promise<ParticipantStats[]> {
   if (!isDeployed) return [];
 

@@ -4,6 +4,16 @@
 
 Built for the **Arc DeFi Track** — [Programmable Money Accelerator](https://www.circle.com/arc) hackathon (Aug 2026 cohort).
 
+## Live on Arc testnet
+
+| Contract | Address |
+|---|---|
+| `ArcFiEscrow` | [`0x635c307d470cB02716a64e343C3472B32d80fdd8`](https://testnet.arcscan.app/address/0x635c307d470cB02716a64e343C3472B32d80fdd8) |
+| `ArcFiMilestones` | [`0x426e15F73c43641bA3D19B6bF0fAb6C118294533`](https://testnet.arcscan.app/address/0x426e15F73c43641bA3D19B6bF0fAb6C118294533) |
+| `ArcFiMaintenancePool` | [`0x052A8D142Ea4BfDbcC0Cc91488e00300df646b9c`](https://testnet.arcscan.app/address/0x052A8D142Ea4BfDbcC0Cc91488e00300df646b9c) |
+
+USDC on Arc: `0x3600000000000000000000000000000000000000` (unified native gas + ERC-20 interface). Verified end-to-end with a real fund → release cycle on testnet.
+
 ## The idea
 
 Open-source maintenance is chronically underfunded, and the funding that does exist is slow: a sponsor wires money to a foundation, a maintainer files paperwork, a contributor waits weeks to get paid for a merged PR.
@@ -83,13 +93,15 @@ forge test -vv
 
 ```shell
 export PRIVATE_KEY=0x...
-export USDC_ADDRESS=0x...       # USDC contract address on Arc testnet
+export USDC_ADDRESS=0x3600000000000000000000000000000000000000  # unified native/ERC-20 USDC on Arc
 export ADMIN_ADDRESS=0x...      # ArcFi backend oracle address
 export TREASURY_ADDRESS=0x...
 export FEE_BPS=250              # optional, defaults to 250 (2.5%)
 
-forge script script/Deploy.s.sol --rpc-url arc_testnet --broadcast --verify
+forge script script/Deploy.s.sol --rpc-url arc_testnet --broadcast
 ```
+
+Get testnet USDC (used for both gas and deposits) from the [Circle faucet](https://faucet.circle.com/). `--verify` needs an `ARCSCAN_API_KEY`; omit it if you don't have one — deployment works either way.
 
 ## Frontend
 
@@ -136,8 +148,8 @@ Everything else — the app, directories, and profile pages — works without th
 
 - [x] Checkpoint 1 — project + idea (this repo)
 - [x] Checkpoint 2 — contracts + a full sponsor/maintainer/contributor site (`frontend/`) with GitHub-backed profiles, demoable end-to-end against a local chain
-- [ ] Deploy to Arc testnet once a testnet USDC address is sourced
-- [ ] Checkpoint 3 — functional MVP: GitHub-webhook oracle backend wired to `release`/`releaseIssue`/`withdraw` (currently triggered manually from `/app`), App Kit **Send** for sponsor deposits, demo video + deck
+- [x] Deployed live on Arc testnet — see [Live on Arc testnet](#live-on-arc-testnet) above; verified with a real fund → release cycle
+- [ ] Checkpoint 3 — remaining: GitHub-webhook oracle backend wired to `release`/`releaseIssue`/`withdraw` (currently triggered manually from `/app`), App Kit **Send** for sponsor deposits, demo video + deck
 - [ ] Post-hackathon — CCTP-based cross-chain funding (sponsor on Ethereum/Base, payout settles on Arc), Circle Wallets for contributor onboarding without a prior wallet
 
 ---

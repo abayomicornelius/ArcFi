@@ -33,6 +33,34 @@ const SOURCES: { kind: ActivityKind; address: `0x${string}`; abi: (typeof contra
   { kind: "pool", address: contracts.maintenancePool.address, abi: contracts.maintenancePool.abi },
 ];
 
+// Public RPCs (Arc's included) cap how many blocks a single eth_getLogs call
+// can span, unlike local Anvil which has no such limit. Fetch backward in
+// small chunks and stop gracefully on the first failure instead of crashing.
+const LOG_CHUNK_SIZE = 2_000n;
+const MAX_CHUNKS = 5;
+
+type PublicClient = NonNullable<ReturnType<typeof usePublicClient>>;
+
+async function getRecentLogs(client: PublicClient, address: `0x${string}`, abi: (typeof contracts)["escrow"]["abi"]) {
+  const latest = await client.getBlockNumber();
+  const allLogs: unknown[] = [];
+  let toBlock = latest;
+
+  for (let i = 0; i < MAX_CHUNKS; i++) {
+    const fromBlock = toBlock > LOG_CHUNK_SIZE ? toBlock - LOG_CHUNK_SIZE + 1n : 0n;
+    try {
+      const logs = await client.getContractEvents({ address, abi, fromBlock, toBlock });
+      allLogs.push(...logs);
+    } catch {
+      break;
+    }
+    if (fromBlock === 0n) break;
+    toBlock = fromBlock - 1n;
+  }
+
+  return allLogs as DecodedLog[];
+}
+
 export function ActivityFeed() {
   const publicClient = usePublicClient();
   const [items, setItems] = useState<ActivityItem[]>([]);
@@ -47,28 +75,15 @@ export function ActivityFeed() {
 
     async function loadHistory() {
       if (!publicClient) return;
-      const latest = await publicClient.getBlockNumber();
-      const fromBlock = latest > 50_000n ? latest - 50_000n : 0n;
 
       const all = (
         await Promise.all(
           SOURCES.map(({ kind, address, abi }) =>
-            publicClient
-              .getContractEvents({ address, abi, fromBlock, toBlock: "latest" })
-              .then((logs) =>
-                logs
-                  .map((log) =>
-                    describeLog(
-                      kind,
-                      log.eventName as string,
-                      log.args as Record<string, unknown>,
-                      log.transactionHash as `0x${string}`,
-                      log.blockNumber as bigint,
-                      log.logIndex ?? 0,
-                    ),
-                  )
-                  .filter((x): x is ActivityItem => x !== null),
-              ),
+            getRecentLogs(publicClient, address, abi).then((logs) =>
+              logs
+                .map((log) => describeLog(kind, log.eventName, log.args, log.transactionHash, log.blockNumber, log.logIndex ?? 0))
+                .filter((x): x is ActivityItem => x !== null),
+            ),
           ),
         )
       ).flat();
@@ -81,12 +96,15 @@ export function ActivityFeed() {
       }
     }
 
-    loadHistory();
+    loadHistory().catch(() => {
+      if (!cancelled) setLoading(false);
+    });
 
     const unwatchers = SOURCES.map(({ kind, address, abi }) =>
       publicClient.watchContractEvent({
         address,
         abi,
+        pollingInterval: 12_000,
         onLogs: (logs) => {
           const newItems = (logs as unknown as DecodedLog[])
             .map((log) => describeLog(kind, log.eventName, log.args, log.transactionHash, log.blockNumber, log.logIndex ?? 0))
@@ -98,6 +116,9 @@ export function ActivityFeed() {
             merged.sort((a, b) => (b.blockNumber === a.blockNumber ? b.logIndex - a.logIndex : Number(b.blockNumber - a.blockNumber)));
             return merged.slice(0, 25);
           });
+        },
+        onError: () => {
+          // Public RPC hiccup (rate limit, etc.) — the next poll retries on its own.
         },
       }),
     );
