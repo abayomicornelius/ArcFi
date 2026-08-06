@@ -59,7 +59,7 @@ export function ProfileCard({
     </>
   );
 
-  const cardClass = `block rounded-xl border border-ink-200 bg-paper-raised p-5 transition ${ACCENTS[accent]}`;
+  const cardClass = `block rounded-md border border-ink-200 bg-paper-raised p-5 transition ${ACCENTS[accent]}`;
 
   return href ? (
     <Link href={href} className={cardClass}>

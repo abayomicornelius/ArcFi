@@ -142,7 +142,7 @@ function OnboardingForm({ user }: { user: Session["user"] }) {
               <button
                 key={role.key}
                 onClick={() => setRoles((r) => ({ ...r, [role.key]: !r[role.key] }))}
-                className={`rounded-xl border p-4 text-left transition ${active ? role.active : "border-ink-200 bg-white hover:border-ink-300"}`}
+                className={`rounded-md border p-4 text-left transition ${active ? role.active : "border-ink-200 bg-white hover:border-ink-300"}`}
               >
                 <div className="mb-2 flex items-center justify-between">
                   <role.icon className={`h-4 w-4 ${active ? role.iconActive : "text-ink-400"}`} />

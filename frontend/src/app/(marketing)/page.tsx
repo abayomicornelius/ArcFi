@@ -122,7 +122,7 @@ export default async function Home() {
           <div className="mx-auto max-w-6xl">
             <div className="mb-8 flex items-end justify-between gap-4">
               <div>
-                <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-ink-400">Live on Arc</h2>
+                <h2 className="mb-1 font-mono text-xs font-medium uppercase tracking-wider text-ink-400">Live on Arc</h2>
                 <p className="text-ink-500">Every fund, allocation, and payout below is a real event read straight off the deployed contracts.</p>
               </div>
               <Link href="/app" className="hidden shrink-0 items-center gap-1 text-sm font-semibold text-usdc-600 hover:underline sm:inline-flex">
@@ -139,7 +139,7 @@ export default async function Home() {
         <div className="mx-auto max-w-6xl px-6 py-16">
           <section className="mb-16 grid gap-10 lg:grid-cols-[1fr_0.8fr]">
             <div>
-              <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-ink-400">Why this fits the DeFi track</h2>
+              <h2 className="mb-1 font-mono text-xs font-medium uppercase tracking-wider text-ink-400">Why this fits the DeFi track</h2>
               <p className="mb-6 max-w-md text-ink-500">Arc&rsquo;s DeFi track asks for advanced programmable money flows. Here&rsquo;s what ArcFi ships against each ask.</p>
               <ol className="space-y-5">
                 {TRACK_FIT.map((item, i) => (
@@ -159,8 +159,8 @@ export default async function Home() {
               </ol>
             </div>
 
-            <div className="rounded-2xl border border-ink-200 bg-ink-900 p-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-white/40">Core products used</p>
+            <div className="rounded-lg border border-ink-200 bg-ink-900 p-6">
+              <p className="font-mono text-xs font-medium uppercase tracking-wider text-white/40">Core products used</p>
               <ul className="mt-4 space-y-3 text-sm text-white/80">
                 <li className="flex items-center gap-2 border-b border-white/10 pb-3">
                   <span className="h-1.5 w-1.5 rounded-full bg-usdc-400" /> Arc — USDC-denominated gas, sub-second settlement
@@ -179,64 +179,58 @@ export default async function Home() {
           </section>
 
           <section className="mb-16">
-            <h2 className="mb-6 text-sm font-semibold uppercase tracking-wide text-ink-400">How it works</h2>
+            <h2 className="mb-6 font-mono text-xs font-medium uppercase tracking-wider text-ink-400">How it works</h2>
             <HowItWorks />
           </section>
 
           <section className="mb-16">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-ink-400">Who&rsquo;s on ArcFi</h2>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <h2 className="mb-4 font-mono text-xs font-medium uppercase tracking-wider text-ink-400">Who&rsquo;s on ArcFi</h2>
+            <div className="divide-y divide-ink-200 border border-ink-200 bg-paper-raised">
               <Link
                 href="/sponsors"
-                className="group rounded-xl border border-ink-200 bg-paper-raised p-5 transition hover:border-usdc-300 hover:shadow-[0_4px_16px_rgba(39,117,202,0.12)]"
+                className="group flex items-center gap-4 border-l-4 border-l-usdc-500 px-5 py-4 transition hover:bg-usdc-50/40"
               >
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-usdc-50 text-usdc-600">
-                    <HandCoins className="h-4 w-4" />
-                  </div>
-                  <span className="font-mono text-2xl font-semibold text-ink-900">{sponsors.length}</span>
+                <HandCoins className="h-5 w-5 shrink-0 text-usdc-500" />
+                <div className="min-w-0 flex-1">
+                  <h3 className="flex items-center gap-1 text-sm font-semibold text-ink-900">
+                    Sponsors <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100" />
+                  </h3>
+                  <p className="truncate text-sm text-ink-500">Individuals and companies funding issues, milestones, and maintenance pools.</p>
                 </div>
-                <h3 className="mb-1 flex items-center gap-1 text-sm font-semibold text-ink-900">
-                  Sponsors <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100" />
-                </h3>
-                <p className="text-sm text-ink-500">Individuals and companies funding issues, milestones, and maintenance pools in USDC.</p>
+                <span className="font-mono text-2xl font-medium text-ink-900">{sponsors.length}</span>
               </Link>
               <Link
                 href="/maintainers"
-                className="group rounded-xl border border-ink-200 bg-paper-raised p-5 transition hover:border-gold-400 hover:shadow-[0_4px_16px_rgba(217,140,15,0.12)]"
+                className="group flex items-center gap-4 border-l-4 border-l-gold-500 px-5 py-4 transition hover:bg-gold-50/40"
               >
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gold-50 text-gold-600">
-                    <Wrench className="h-4 w-4" />
-                  </div>
-                  <span className="font-mono text-2xl font-semibold text-ink-900">{maintainers.length}</span>
+                <Wrench className="h-5 w-5 shrink-0 text-gold-500" />
+                <div className="min-w-0 flex-1">
+                  <h3 className="flex items-center gap-1 text-sm font-semibold text-ink-900">
+                    Maintainers <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100" />
+                  </h3>
+                  <p className="truncate text-sm text-ink-500">Repo owners who scope bounties and vouch for merged work.</p>
                 </div>
-                <h3 className="mb-1 flex items-center gap-1 text-sm font-semibold text-ink-900">
-                  Maintainers <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100" />
-                </h3>
-                <p className="text-sm text-ink-500">Repo owners who scope bounties, allocate milestone budgets, and vouch for merged work.</p>
+                <span className="font-mono text-2xl font-medium text-ink-900">{maintainers.length}</span>
               </Link>
               <Link
                 href="/contributors"
-                className="group rounded-xl border border-ink-200 bg-paper-raised p-5 transition hover:border-emerald-300 hover:shadow-[0_4px_16px_rgba(16,185,129,0.12)]"
+                className="group flex items-center gap-4 border-l-4 border-l-emerald-500 px-5 py-4 transition hover:bg-emerald-50/40"
               >
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                    <Users className="h-4 w-4" />
-                  </div>
-                  <span className="font-mono text-2xl font-semibold text-ink-900">{contributors.length}</span>
+                <Users className="h-5 w-5 shrink-0 text-emerald-500" />
+                <div className="min-w-0 flex-1">
+                  <h3 className="flex items-center gap-1 text-sm font-semibold text-ink-900">
+                    Contributors <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100" />
+                  </h3>
+                  <p className="truncate text-sm text-ink-500">The people who ship merged PRs and get paid in USDC the moment they land.</p>
                 </div>
-                <h3 className="mb-1 flex items-center gap-1 text-sm font-semibold text-ink-900">
-                  Contributors <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100" />
-                </h3>
-                <p className="text-sm text-ink-500">The people who ship the merged PRs and get paid in USDC the moment they land.</p>
+                <span className="font-mono text-2xl font-medium text-ink-900">{contributors.length}</span>
               </Link>
             </div>
           </section>
 
           <section className="mb-16">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-ink-400">Questions</h2>
-            <div className="divide-y divide-ink-200 rounded-xl border border-ink-200 bg-paper-raised">
+            <h2 className="mb-4 font-mono text-xs font-medium uppercase tracking-wider text-ink-400">Questions</h2>
+            <div className="divide-y divide-ink-200 rounded-md border border-ink-200 bg-paper-raised">
               {FAQ.map((item) => (
                 <details key={item.q} className="group p-5">
                   <summary className="cursor-pointer list-none text-sm font-semibold text-ink-900 marker:content-none">
@@ -251,7 +245,7 @@ export default async function Home() {
             </div>
           </section>
 
-          <section className="hero-mesh relative overflow-hidden rounded-2xl px-8 py-14 text-center">
+          <section className="hero-mesh relative overflow-hidden rounded-lg px-8 py-14 text-center">
             <div className="hero-grid absolute inset-0" />
             <div className="relative">
               <h2 className="text-2xl font-semibold text-white sm:text-3xl">Ready to fund or get funded?</h2>

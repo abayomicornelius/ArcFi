@@ -11,7 +11,7 @@ export default async function SponsorsPage() {
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
       <div className="mb-8 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-usdc-50 text-usdc-600">
+        <div className="flex h-11 w-11 items-center justify-center rounded-md bg-usdc-50 text-usdc-600">
           <HandCoins className="h-5 w-5" />
         </div>
         <div>
@@ -21,7 +21,7 @@ export default async function SponsorsPage() {
       </div>
 
       {sponsors.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-ink-200 p-10 text-center text-sm text-ink-400">
+        <p className="rounded-md border border-dashed border-ink-200 p-10 text-center text-sm text-ink-400">
           No sponsors yet — be the first to <a href="/onboarding" className="text-usdc-600 underline">set up a sponsor profile</a>.
         </p>
       ) : (

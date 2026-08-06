@@ -127,7 +127,7 @@ export function EscrowPanel() {
         </Field>
 
         {escrowLoading && (
-          <div className="mt-4 space-y-3 rounded-xl bg-ink-50 p-4">
+          <div className="mt-4 space-y-3 rounded-md bg-ink-50 p-4">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-4 w-1/2" />
@@ -135,7 +135,7 @@ export function EscrowPanel() {
         )}
 
         {!escrowLoading && escrowData && status && (
-          <div className="mt-4 space-y-2 rounded-xl bg-ink-50 p-4 text-sm">
+          <div className="mt-4 space-y-2 rounded-md bg-ink-50 p-4 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-ink-500">Status</span>
               <Pill tone={status === "Funded" ? "warn" : status === "Paid" ? "good" : "neutral"}>{status}</Pill>

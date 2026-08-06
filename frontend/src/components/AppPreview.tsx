@@ -3,7 +3,7 @@ import { Coins, Flag, PiggyBank, CheckCircle2 } from "lucide-react";
 /** Static mockup of the /app dashboard — proves the product exists without faking live data. */
 export function AppPreview() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-ink-200 bg-paper-raised shadow-[0_20px_60px_-20px_rgba(20,24,31,0.25)]">
+    <div className="overflow-hidden rounded-lg border border-ink-200 bg-paper-raised shadow-[0_20px_60px_-20px_rgba(20,24,31,0.25)]">
       <div className="flex items-center gap-1.5 border-b border-ink-100 bg-ink-50 px-4 py-3">
         <span className="h-2.5 w-2.5 rounded-full bg-red-300" />
         <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
@@ -45,7 +45,7 @@ export function AppPreview() {
             Approve &amp; Fund
           </div>
 
-          <div className="mt-5 space-y-2 rounded-xl bg-ink-50 p-3.5">
+          <div className="mt-5 space-y-2 rounded-md bg-ink-50 p-3.5">
             <div className="flex items-center justify-between text-xs">
               <span className="text-ink-500">Status</span>
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-700">

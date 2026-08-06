@@ -70,20 +70,20 @@ export default async function ProfilePage({ params }: { params: Promise<{ addres
       {user?.bio && <p className="mb-8 max-w-xl text-ink-600">{user.bio}</p>}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-ink-200 bg-paper-raised p-5">
-          <p className="text-xs uppercase tracking-wide text-ink-400">Total funded</p>
+        <div className="rounded-md border border-ink-200 bg-paper-raised p-5">
+          <p className="font-mono text-xs uppercase tracking-wider text-ink-400">Total funded</p>
           <p className="mt-1 font-mono text-2xl font-semibold text-ink-900">{formatUnits(stats?.fundedUsdc ?? 0n, 6)} USDC</p>
           <p className="mt-1 text-xs text-ink-400">across {stats?.fundedCount ?? 0} deposit{stats?.fundedCount === 1 ? "" : "s"}</p>
         </div>
-        <div className="rounded-xl border border-ink-200 bg-paper-raised p-5">
-          <p className="text-xs uppercase tracking-wide text-ink-400">Total received</p>
+        <div className="rounded-md border border-ink-200 bg-paper-raised p-5">
+          <p className="font-mono text-xs uppercase tracking-wider text-ink-400">Total received</p>
           <p className="mt-1 font-mono text-2xl font-semibold text-ink-900">{formatUnits(stats?.receivedUsdc ?? 0n, 6)} USDC</p>
           <p className="mt-1 text-xs text-ink-400">across {stats?.receivedCount ?? 0} payout{stats?.receivedCount === 1 ? "" : "s"}</p>
         </div>
       </div>
 
       {!user && (
-        <p className="mt-8 rounded-xl border border-dashed border-ink-200 p-6 text-center text-sm text-ink-400">
+        <p className="mt-8 rounded-md border border-dashed border-ink-200 p-6 text-center text-sm text-ink-400">
           This wallet hasn&rsquo;t claimed a profile yet. Is this you?{" "}
           <a href="/onboarding" className="text-usdc-600 underline">
             Connect GitHub and link it

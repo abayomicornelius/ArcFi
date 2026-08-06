@@ -41,7 +41,7 @@ export default function AppPage() {
 
         <nav className="flex-1 space-y-6 px-3 py-2">
           <div>
-            <p className="mb-2 px-2.5 text-[10px] font-semibold uppercase tracking-wider text-white/30">Products</p>
+            <p className="mb-2 px-2.5 font-mono text-[10px] font-medium uppercase tracking-wider text-white/30">Products</p>
             <div className="space-y-1">
               {TABS.map((t) => (
                 <button
@@ -60,7 +60,7 @@ export default function AppPage() {
           </div>
 
           <div>
-            <p className="mb-2 px-2.5 text-[10px] font-semibold uppercase tracking-wider text-white/30">Directory</p>
+            <p className="mb-2 px-2.5 font-mono text-[10px] font-medium uppercase tracking-wider text-white/30">Directory</p>
             <div className="space-y-1">
               {DIRECTORY_LINKS.map((link) => (
                 <Link
@@ -126,7 +126,7 @@ export default function AppPage() {
           </div>
 
           <div className="mb-8 max-w-2xl">
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-400">{TABS.find((t) => t.id === tab)?.blurb}</p>
+            <p className="mb-1.5 font-mono text-xs font-medium uppercase tracking-wider text-ink-400">{TABS.find((t) => t.id === tab)?.blurb}</p>
             <h1 className="text-2xl font-semibold tracking-tight text-ink-900">Fund, allocate, and release USDC payouts</h1>
           </div>
 

@@ -109,7 +109,7 @@ export function ActivityFeed() {
   }, [publicClient]);
 
   return (
-    <div className="rounded-2xl border border-ink-200 bg-paper-raised shadow-[0_1px_2px_rgba(20,24,31,0.04)]">
+    <div className="rounded-lg border border-ink-200 bg-paper-raised shadow-[0_1px_2px_rgba(20,24,31,0.04)]">
       <div className="flex items-center gap-2 border-b border-ink-100 px-5 py-4">
         <Activity className="h-4 w-4 text-usdc-500" />
         <h3 className="text-sm font-semibold text-ink-900">Live on-chain activity</h3>

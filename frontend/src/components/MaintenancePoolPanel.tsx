@@ -84,7 +84,7 @@ export function MaintenancePoolPanel() {
         </Field>
 
         {poolData && (
-          <div className="mt-4 space-y-2 rounded-xl bg-ink-50 p-4 text-sm">
+          <div className="mt-4 space-y-2 rounded-md bg-ink-50 p-4 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-ink-500">Balance</span>
               <span className="font-mono text-ink-700">{formatUnits(poolData.balance, 6)} USDC</span>

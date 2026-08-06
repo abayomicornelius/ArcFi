@@ -14,7 +14,7 @@ export default async function MaintainersPage() {
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
       <div className="mb-8 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gold-50 text-gold-600">
+        <div className="flex h-11 w-11 items-center justify-center rounded-md bg-gold-50 text-gold-600">
           <Wrench className="h-5 w-5" />
         </div>
         <div>
@@ -24,7 +24,7 @@ export default async function MaintainersPage() {
       </div>
 
       {ADMIN_ADDRESS && (
-        <div className="mb-8 flex items-start gap-4 rounded-xl border border-ink-200 bg-ink-900 p-5 text-white">
+        <div className="mb-8 flex items-start gap-4 rounded-md border border-ink-200 bg-ink-900 p-5 text-white">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/10">
             <Bot className="h-5 w-5" />
           </div>
@@ -44,7 +44,7 @@ export default async function MaintainersPage() {
       )}
 
       {maintainers.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-ink-200 p-10 text-center text-sm text-ink-400">
+        <p className="rounded-md border border-dashed border-ink-200 p-10 text-center text-sm text-ink-400">
           No repo maintainers registered yet — <a href="/onboarding" className="text-gold-600 underline">set up a maintainer profile</a>.
         </p>
       ) : (

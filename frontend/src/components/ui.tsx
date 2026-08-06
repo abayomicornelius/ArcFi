@@ -3,7 +3,7 @@ import type { TxState } from "@/lib/hooks";
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-ink-200 bg-paper-raised p-6 shadow-[0_1px_2px_rgba(20,24,31,0.04)] ${className}`}>
+    <div className={`rounded-lg border border-ink-200 bg-paper-raised p-6 shadow-[0_1px_2px_rgba(20,24,31,0.04)] ${className}`}>
       {children}
     </div>
   );
@@ -98,4 +98,27 @@ export function Pill({ children, tone = "neutral" }: { children: React.ReactNode
 
 export function Skeleton({ className = "" }: { className?: string }) {
   return <span className={`inline-block animate-pulse rounded bg-ink-100 ${className}`} />;
+}
+
+/** Label/value row with a rule underneath — a ledger line, not another bordered icon box. */
+export function LedgerRow({
+  label,
+  value,
+  icon: Icon,
+  accent = "text-ink-400",
+}: {
+  label: string;
+  value: React.ReactNode;
+  icon?: React.ComponentType<{ className?: string }>;
+  accent?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between border-b border-ink-100 py-3 last:border-b-0">
+      <span className="flex items-center gap-2 text-sm text-ink-500">
+        {Icon && <Icon className={`h-3.5 w-3.5 ${accent}`} />}
+        {label}
+      </span>
+      <span className="font-mono text-sm font-semibold text-ink-900">{value}</span>
+    </div>
+  );
 }

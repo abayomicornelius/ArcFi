@@ -132,7 +132,7 @@ export function MilestonesPanel() {
         </Field>
 
         {milestoneData && milestoneData.sponsor !== "0x0000000000000000000000000000000000000000" && (
-          <div className="mt-4 space-y-2 rounded-xl bg-ink-50 p-4 text-sm">
+          <div className="mt-4 space-y-2 rounded-md bg-ink-50 p-4 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-ink-500">Status</span>
               <Pill tone={milestoneData.closed ? "neutral" : "warn"}>{milestoneData.closed ? "Closed" : "Open"}</Pill>

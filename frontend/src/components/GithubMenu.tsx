@@ -32,7 +32,7 @@ export function GithubMenu({ dark = false }: { dark?: boolean }) {
         </button>
         {menuOpen && (
           <div
-            className="absolute bottom-full left-0 mb-2 w-44 overflow-hidden rounded-xl border border-ink-200 bg-white py-1 shadow-lg sm:bottom-auto sm:left-auto sm:right-0 sm:top-full sm:mb-0 sm:mt-2"
+            className="absolute bottom-full left-0 mb-2 w-44 overflow-hidden rounded-md border border-ink-200 bg-white py-1 shadow-lg sm:bottom-auto sm:left-auto sm:right-0 sm:top-full sm:mb-0 sm:mt-2"
             onMouseLeave={() => setMenuOpen(false)}
           >
             <Link href="/onboarding" className="block px-3.5 py-2 text-sm text-ink-700 hover:bg-ink-50">
