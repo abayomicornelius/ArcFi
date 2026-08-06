@@ -4,10 +4,13 @@ import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { GitBranch, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { useGithubConfigured } from "@/lib/github-config-context";
 
 export function GithubMenu({ dark = false }: { dark?: boolean }) {
   const { data: session, status } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
+  const githubConfigured = useGithubConfigured();
 
   if (status === "authenticated" && session.user) {
     return (
@@ -54,9 +57,22 @@ export function GithubMenu({ dark = false }: { dark?: boolean }) {
 
   return (
     <button
-      onClick={() => signIn("github", { callbackUrl: "/onboarding" })}
+      onClick={() => {
+        if (!githubConfigured) {
+          toast.error("GitHub sign-in isn't configured yet", {
+            description: "Set AUTH_GITHUB_ID / AUTH_GITHUB_SECRET in frontend/.env.local — see the README.",
+          });
+          return;
+        }
+        signIn("github", { callbackUrl: "/onboarding" });
+      }}
+      title={githubConfigured ? undefined : "GitHub sign-in isn't configured yet — see the README"}
       className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-        dark ? "border border-white/15 text-white hover:bg-white/10" : "bg-ink-900 text-white hover:bg-ink-700"
+        dark
+          ? "border border-white/15 text-white hover:bg-white/10"
+          : githubConfigured
+            ? "bg-ink-900 text-white hover:bg-ink-700"
+            : "bg-ink-100 text-ink-400 hover:bg-ink-200"
       }`}
     >
       <GitBranch className="h-4 w-4" />

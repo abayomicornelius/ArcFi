@@ -127,10 +127,10 @@ Profiles require a GitHub OAuth App (this one manual step can't be scripted — 
 
 1. [github.com/settings/developers](https://github.com/settings/developers) → **New OAuth App**.
 2. Homepage URL: `http://localhost:3000`. Callback URL: `http://localhost:3000/api/auth/callback/github`.
-3. Copy the Client ID, generate a Client Secret, and set `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` in `frontend/.env.local`.
+3. Copy the Client ID, generate a Client Secret, and set `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` in `frontend/.env.local`.
 4. Set `AUTH_SECRET` to a random value (`openssl rand -base64 32`) and `AUTH_URL` to your app's URL.
 
-Everything else — the app, directories, and profile pages — works without this; only "Connect GitHub" requires it.
+Everything else — the app, directories, and profile pages — works without this; only "Connect GitHub" requires it. Until it's configured, the button shows a clear toast explaining why instead of failing silently.
 
 ## Roadmap
 

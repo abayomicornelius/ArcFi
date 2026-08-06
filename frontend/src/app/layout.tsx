@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
 import { Providers } from "./providers";
+import { GithubConfigProvider } from "@/lib/github-config-context";
+import { isGithubConfigured } from "@/auth";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -29,7 +31,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${inter.variable} ${plexMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
+        <GithubConfigProvider configured={isGithubConfigured}>
+          <Providers>{children}</Providers>
+        </GithubConfigProvider>
       </body>
     </html>
   );
