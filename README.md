@@ -91,10 +91,34 @@ export FEE_BPS=250              # optional, defaults to 250 (2.5%)
 forge script script/Deploy.s.sol --rpc-url arc_testnet --broadcast --verify
 ```
 
+## Frontend
+
+`frontend/` is a Next.js + wagmi/viem sponsor & maintainer dashboard — connect a wallet, fund an escrow, allocate/release milestones, and deposit into or draw down a maintenance pool. No WalletConnect account needed; it connects directly to an injected wallet (MetaMask etc.).
+
+It ships pointed at a **local Anvil chain with a mock USDC** by default, so the whole flow — including a one-click "mint test USDC" faucet — is demoable with zero external dependencies:
+
+```shell
+# 1. In one terminal: start a local chain
+anvil
+
+# 2. In another: deploy the contract suite + a MockUSDC against it
+forge script script/DeployLocal.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+
+# 3. Copy the logged addresses into frontend/.env.local (see frontend/.env.example),
+#    then run the app
+cd frontend
+cp .env.example .env.local   # fill in the addresses from step 2
+npm install
+npm run dev
+```
+
+To point it at Arc testnet instead, deploy with `script/Deploy.s.sol` (see above), set `NEXT_PUBLIC_CHAIN=arc` plus the resulting addresses in `frontend/.env.local`, and connect a wallet funded with real Arc-testnet USDC — the faucet button only appears on the local chain, since it depends on MockUSDC's open `mint`.
+
 ## Roadmap
 
 - [x] Checkpoint 1 — project + idea (this repo)
-- [ ] Checkpoint 2 — deployed testnet contracts + a minimal sponsor/maintainer UI
+- [x] Checkpoint 2 — contracts + a sponsor/maintainer dashboard (`frontend/`), demoable end-to-end against a local chain
+- [ ] Deploy to Arc testnet once a testnet USDC address is sourced
 - [ ] Checkpoint 3 — functional MVP: GitHub-webhook oracle backend wired to `release`/`releaseIssue`/`withdraw`, App Kit **Send** for sponsor deposits, demo video + deck
 - [ ] Post-hackathon — CCTP-based cross-chain funding (sponsor on Ethereum/Base, payout settles on Arc), Circle Wallets for contributor onboarding without a prior wallet
 
