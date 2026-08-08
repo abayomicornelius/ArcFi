@@ -13,6 +13,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!bounty) {
     return NextResponse.json({ error: "Bounty not found" }, { status: 404 });
   }
+  if (bounty.status !== "funded") {
+    return NextResponse.json({ error: "This bounty isn't open for applications" }, { status: 409 });
+  }
 
   const { message } = (await req.json().catch(() => ({}))) as { message?: string };
 

@@ -25,6 +25,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ ok: true, alreadyResolved: true });
   }
 
+  // The bounty itself was already verified on-chain at /api/bounties/register
+  // — this just confirms it's actually the issue this request was about,
+  // not an unrelated bounty passed in by mistake or in bad faith.
+  const bounty = await prisma.bounty.findUnique({ where: { id: bountyId } });
+  if (
+    !bounty ||
+    bounty.githubOwner !== request.githubOwner ||
+    bounty.githubRepo !== request.githubRepo ||
+    bounty.githubIssueNumber !== request.githubIssueNumber
+  ) {
+    return NextResponse.json({ error: "That bounty doesn't match this request's issue" }, { status: 400 });
+  }
+
   await prisma.bountyRequest.update({ where: { id }, data: { status: "funded", fundedBountyId: bountyId } });
   await notify(
     request.requestedByUserId,

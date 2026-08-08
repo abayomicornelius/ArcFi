@@ -37,6 +37,54 @@ export function extractClosingIssueNumbers(prBody: string | null | undefined): n
   return [...numbers];
 }
 
+/**
+ * Every distinct GitHub login that authored a commit on the merged PR, in
+ * first-appearance order, always led by the PR's own author. A PR with
+ * commits from more than one linked account is treated as a team effort —
+ * this is what lets the oracle split a bounty automatically instead of
+ * always paying 100% to whoever opened the PR.
+ *
+ * Deliberately commit-authorship, not `Co-authored-by:` trailers: GitHub
+ * already resolves each commit's author to a real account (or `null` for an
+ * unlinked email/bot), so no separate email-to-login resolution step is
+ * needed.
+ */
+export async function fetchPullRequestContributors(
+  owner: string,
+  repo: string,
+  prNumber: number,
+  prAuthorLogin: string,
+  githubToken?: string,
+): Promise<string[]> {
+  const logins = new Set<string>([prAuthorLogin]);
+
+  const res = await fetch(
+    `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${prNumber}/commits?per_page=100`,
+    {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        ...(githubToken ? { Authorization: `Bearer ${githubToken}` } : {}),
+      },
+    },
+  );
+
+  if (!res.ok) {
+    // Best-effort enrichment — fall back to solo-author attribution rather
+    // than failing the whole release over a GitHub API hiccup or rate limit.
+    return [...logins];
+  }
+
+  const commits = (await res.json()) as Array<{ author: { login: string; type: string } | null }>;
+  for (const commit of commits) {
+    if (commit.author?.login && commit.author.type !== "Bot") {
+      logins.add(commit.author.login);
+    }
+  }
+
+  return [...logins];
+}
+
 export interface MergedPullRequestEvent {
   owner: string;
   repo: string;

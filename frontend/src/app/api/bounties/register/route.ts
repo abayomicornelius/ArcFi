@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { isDeployed } from "@/lib/contracts";
+import { verifyEscrowFunded, verifyMilestoneAllocated } from "@/lib/verifyOnchain";
 
 /**
  * Records the GitHub issue a sponsor just funded/allocated on-chain, so the
@@ -8,6 +10,11 @@ import { prisma } from "@/lib/prisma";
  * from EscrowPanel (after `fund`) and MilestonesPanel (after `allocate`) —
  * the on-chain tx itself always succeeds independently of this; if the
  * sponsor isn't GitHub-signed-in, the caller just skips this call.
+ *
+ * The oracle backend later trusts a "funded" Bounty row enough to trigger a
+ * real payout, so this never takes the request body's word for it — it reads
+ * the claimed issue/milestone straight off the deployed contract and only
+ * creates the record if the chain itself confirms funds are actually there.
  */
 export async function POST(req: Request) {
   const session = await auth();
@@ -39,6 +46,19 @@ export async function POST(req: Request) {
   }
   if (contractType === "milestone" && !milestoneId) {
     return NextResponse.json({ error: "milestoneId is required for milestone bounties" }, { status: 400 });
+  }
+
+  if (isDeployed) {
+    const verified =
+      contractType === "escrow"
+        ? await verifyEscrowFunded(onChainIssueId)
+        : await verifyMilestoneAllocated(milestoneId!, onChainIssueId);
+    if (!verified) {
+      return NextResponse.json(
+        { error: "Could not verify this funding on-chain — the escrow/allocation isn't in a Funded state for that issue." },
+        { status: 409 },
+      );
+    }
   }
 
   const bounty = await prisma.bounty.create({

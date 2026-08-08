@@ -111,6 +111,10 @@ Get testnet USDC (used for both gas and deposits) from the [Circle faucet](https
 - **App** (`/app`) — connect a wallet, fund an escrow, allocate/release milestones, deposit into or draw down a maintenance pool. A live activity feed watches all three contracts' events in real time. No WalletConnect account needed; it connects directly to an injected wallet (MetaMask etc.).
 - **Profiles** — sign in with GitHub (`/onboarding`) to register as a **sponsor**, **maintainer**, and/or **contributor**, write a bio, and link a wallet. Profiles are backed by a real database (Prisma + SQLite locally), not mocked.
 - **Directories** (`/sponsors`, `/maintainers`, `/contributors`) — public listings that merge registered profiles with on-chain USDC funded/received totals computed by scanning contract events. `/profile/[address]` is the per-wallet detail page.
+- **Bounty marketplace** (`/bounties`) — every GitHub issue with USDC actually escrowed on Arc, browsable without a wallet. A maintainer can also **request funding** for an unfunded issue (`/bounties/request`); a sponsor funding it from the request auto-links the two. Contributors can apply to a bounty (`/bounties/[id]`), and the repo's verified maintainer (or the bounty's sponsor, if the repo isn't listed) approves one — an off-chain "who's on this" signal that never gates the actual on-chain payout.
+- **Repo listings** (`/maintainers/submit`) — list a repo only after proving admin/maintain access to it via the GitHub API using the signer's own OAuth token, not a self-reported name.
+- **Leaderboard & analytics** (`/leaderboard`, `/analytics`) — cross-role rankings and protocol-wide charts, both computed from the same on-chain event scan the directories use.
+- **Notifications** — an in-app bell for application decisions and funded funding-requests, backed by the same database as profiles.
 
 ### Local setup
 
@@ -156,13 +160,19 @@ tied to a single PR the way escrow/milestone payouts are.
    milestone issue (`MilestonesPanel`) now has optional GitHub
    owner/repo/issue# fields. Filling them in (requires GitHub sign-in)
    registers the on-chain issue against a real GitHub issue via
-   `POST /api/bounties/register`.
+   `POST /api/bounties/register` — which reads the claimed issue/allocation
+   straight off the deployed contract (`getEscrow` / `issueStatus`) before
+   ever trusting it, rather than taking the request body's word for it.
 2. `backend/` receives GitHub's `pull_request` webhook, verifies its HMAC
    signature, and — once a PR is merged and its body closes a registered
-   issue (`closes #12`, `fixes #7`, ...) — resolves the PR author's linked
-   wallet and calls `release`/`releaseIssue` with the oracle's key. It talks
-   to the frontend's `/api/internal/*` routes (shared-secret auth) rather
-   than touching the database directly, so Prisma access stays in one place.
+   issue (`closes #12`, `fixes #7`, ...) — resolves every commit author on
+   the PR to a linked wallet and calls `release`/`releaseIssue` with the
+   oracle's key. A PR with more than one linked contributor splits the
+   bounty evenly across all of them in the same transaction, largest-
+   remainder rounded to a bps sum of exactly 10,000 — a solo-author PR is
+   just the n=1 case of the same path. It talks to the frontend's
+   `/api/internal/*` routes (shared-secret auth) rather than touching the
+   database directly, so Prisma access stays in one place.
 3. Idempotent by design: a redelivered or duplicate webhook finds the
    bounty already marked `released` and skips it; even if it didn't, the
    contracts themselves revert cleanly on double-release.
@@ -198,16 +208,20 @@ correctly treated as a no-op afterward.
   hackathon demo; before any real funds depend on this, split these roles
   (ideally the oracle key lives only in `backend/`'s environment, not a
   personal wallet) and consider a multisig for `admin`/`treasury`.
-- **Single-recipient auto-resolution.** The oracle pays the merged PR's
-  author 100% of a bounty. Team splits are still possible, just not
-  auto-detected — use the manual release path in `/app` for those.
+- **Team-split auto-resolution is by commit authorship, evenly.** The oracle
+  splits a bounty evenly across every linked-wallet GitHub account that
+  authored a commit on the merged PR — it doesn't parse an explicit
+  percentage split (e.g. "70/30") from anywhere. Precise custom splits are
+  still possible via the manual release path in `/app`.
 
 ## Roadmap
 
 - [x] Checkpoint 1 — project + idea (this repo)
 - [x] Checkpoint 2 — contracts + a full sponsor/maintainer/contributor site (`frontend/`) with GitHub-backed profiles, demoable end-to-end against a local chain
 - [x] Deployed live on Arc testnet — see [Live on Arc testnet](#live-on-arc-testnet) above; verified with a real fund → release cycle
-- [x] Checkpoint 3 — GitHub-webhook oracle backend (`backend/`) wired to `release`/`releaseIssue`, verified end-to-end against a local deployment. Remaining: App Kit **Send** for sponsor deposits, demo video + deck
+- [x] Checkpoint 3 — GitHub-webhook oracle backend (`backend/`) wired to `release`/`releaseIssue`, verified end-to-end against a local deployment, plus a full bounty marketplace, leaderboard, analytics, and notifications on the frontend
+- [x] Hardening pass — bounty registration now verifies claimed funding directly against the deployed contracts instead of trusting the request, and the oracle auto-splits a bounty evenly across every linked-wallet PR contributor instead of always paying the PR opener 100%
+- [ ] Remaining before Demo Day — App Kit **Send** for sponsor deposits, demo video + deck
 - [ ] Post-hackathon — CCTP-based cross-chain funding (sponsor on Ethereum/Base, payout settles on Arc), Circle Wallets for contributor onboarding without a prior wallet
 
 ---

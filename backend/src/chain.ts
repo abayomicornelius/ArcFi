@@ -47,25 +47,30 @@ async function getPublicClient() {
 
 export const oracleAddress: Address = account.address;
 
-export async function releaseEscrow(issueId: bigint, recipient: Address): Promise<Hash> {
+export interface ReleaseRecipient {
+  account: Address;
+  bps: number;
+}
+
+export async function releaseEscrow(issueId: bigint, recipients: ReleaseRecipient[]): Promise<Hash> {
   const wallet = await getWalletClient();
   return wallet.writeContract({
     chain: wallet.chain,
     address: env.escrowAddress,
     abi: escrowAbi,
     functionName: "release",
-    args: [issueId, [{ account: recipient, bps: 10_000 }]],
+    args: [issueId, recipients],
   });
 }
 
-export async function releaseMilestoneIssue(milestoneId: bigint, issueId: bigint, recipient: Address): Promise<Hash> {
+export async function releaseMilestoneIssue(milestoneId: bigint, issueId: bigint, recipients: ReleaseRecipient[]): Promise<Hash> {
   const wallet = await getWalletClient();
   return wallet.writeContract({
     chain: wallet.chain,
     address: env.milestonesAddress,
     abi: milestonesAbi,
     functionName: "releaseIssue",
-    args: [milestoneId, issueId, [{ account: recipient, bps: 10_000 }]],
+    args: [milestoneId, issueId, recipients],
   });
 }
 

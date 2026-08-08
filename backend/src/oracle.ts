@@ -1,8 +1,11 @@
 import type { Address } from "viem";
 import { BaseError, ContractFunctionRevertedError } from "viem";
 import type { MergedPullRequestEvent } from "./github.js";
+import { fetchPullRequestContributors } from "./github.js";
 import { lookupBounty, lookupWallet, updateBountyStatus } from "./api-client.js";
-import { releaseEscrow, releaseMilestoneIssue, waitForReceipt } from "./chain.js";
+import { releaseEscrow, releaseMilestoneIssue, waitForReceipt, type ReleaseRecipient } from "./chain.js";
+import { splitEvenlyBps } from "./splits.js";
+import { env } from "./env.js";
 
 // Contract errors that mean "this was already paid out" — a legitimate race
 // (e.g. someone manually released it first), not a failure. Anything else
@@ -19,19 +22,44 @@ function revertReason(err: unknown): string | undefined {
   return undefined;
 }
 
-async function releaseOne(bounty: Awaited<ReturnType<typeof lookupBounty>>, recipient: Address) {
+/**
+ * Resolves every commit author on the merged PR to a linked wallet and
+ * splits the bounty evenly across whichever ones actually have one — a
+ * multi-commit-author PR pays the whole team in one transaction instead of
+ * defaulting 100% to the PR opener. Contributors without a linked wallet are
+ * simply left out of the split; if none of them have one, the caller falls
+ * back to the existing pending_recipient flow.
+ */
+async function resolveRecipients(event: MergedPullRequestEvent): Promise<ReleaseRecipient[]> {
+  const contributors = await fetchPullRequestContributors(event.owner, event.repo, event.prNumber, event.authorLogin, env.githubToken);
+
+  const wallets = new Map<string, Address>(); // lowercased address -> checksummed-as-received address
+  for (const login of contributors) {
+    const { walletAddress } = await lookupWallet(login);
+    if (walletAddress) wallets.set(walletAddress.toLowerCase(), walletAddress as Address);
+  }
+
+  const accounts = [...wallets.values()];
+  if (accounts.length === 0) return [];
+
+  const bps = splitEvenlyBps(accounts.length);
+  return accounts.map((account, i) => ({ account, bps: bps[i] }));
+}
+
+async function releaseMany(bounty: Awaited<ReturnType<typeof lookupBounty>>, recipients: ReleaseRecipient[]) {
   if (!bounty) return;
 
   try {
     const hash =
       bounty.contractType === "escrow"
-        ? await releaseEscrow(BigInt(bounty.onChainIssueId), recipient)
-        : await releaseMilestoneIssue(BigInt(bounty.milestoneId!), BigInt(bounty.onChainIssueId), recipient);
+        ? await releaseEscrow(BigInt(bounty.onChainIssueId), recipients)
+        : await releaseMilestoneIssue(BigInt(bounty.milestoneId!), BigInt(bounty.onChainIssueId), recipients);
 
     console.log(`[oracle] release tx sent for bounty ${bounty.id}: ${hash}`);
     await waitForReceipt(hash);
     await updateBountyStatus(bounty.id, "released", hash);
-    console.log(`[oracle] bounty ${bounty.id} released to ${recipient} (${hash})`);
+    const summary = recipients.map((r) => `${r.account} (${(r.bps / 100).toFixed(2)}%)`).join(", ");
+    console.log(`[oracle] bounty ${bounty.id} released to ${summary} (${hash})`);
   } catch (err) {
     const reason = revertReason(err);
     if (reason && ALREADY_RELEASED_ERRORS.has(reason)) {
@@ -58,15 +86,15 @@ export async function handleMergedPullRequest(event: MergedPullRequestEvent) {
       continue;
     }
 
-    const { walletAddress } = await lookupWallet(event.authorLogin);
-    if (!walletAddress) {
+    const recipients = await resolveRecipients(event);
+    if (recipients.length === 0) {
       console.log(
-        `[oracle] bounty ${bounty.id}: PR author ${event.authorLogin} has no linked wallet — marking pending_recipient`,
+        `[oracle] bounty ${bounty.id}: no contributor on PR #${event.prNumber} has a linked wallet — marking pending_recipient`,
       );
       await updateBountyStatus(bounty.id, "pending_recipient");
       continue;
     }
 
-    await releaseOne(bounty, walletAddress as Address);
+    await releaseMany(bounty, recipients);
   }
 }

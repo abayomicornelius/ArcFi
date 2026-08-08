@@ -17,4 +17,8 @@ export const env = {
   internalApiSecret: required("INTERNAL_API_SECRET"),
   frontendInternalUrl: process.env.FRONTEND_INTERNAL_URL ?? "http://localhost:3000",
   port: Number(process.env.PORT ?? 4100),
+  // Optional — raises GitHub's API rate limit when resolving a merged PR's
+  // commit authors for team-split detection. Unauthenticated calls work
+  // fine at low volume, just at GitHub's much stricter anonymous limit.
+  githubToken: process.env.GITHUB_TOKEN,
 };

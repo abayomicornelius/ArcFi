@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { verifySignature, extractClosingIssueNumbers, parseMergedPullRequestEvent } from "./github.js";
+import { verifySignature, extractClosingIssueNumbers, parseMergedPullRequestEvent, fetchPullRequestContributors } from "./github.js";
 
 test("verifySignature accepts a correctly-signed payload", () => {
   const secret = "test-secret";
@@ -84,4 +84,52 @@ test("parseMergedPullRequestEvent ignores non-closed actions (opened, synchroniz
 
 test("parseMergedPullRequestEvent ignores a merged PR that closes no issue", () => {
   assert.equal(parseMergedPullRequestEvent("pull_request", mergedPrPayload({ body: "no linked issue here" })), null);
+});
+
+test("fetchPullRequestContributors dedupes commit authors and always includes the PR author first", async (t) => {
+  t.mock.method(globalThis, "fetch", async () =>
+    new Response(
+      JSON.stringify([
+        { author: { login: "octocat", type: "User" } },
+        { author: { login: "hubot", type: "User" } },
+        { author: { login: "octocat", type: "User" } },
+      ]),
+      { status: 200 },
+    ),
+  );
+
+  const logins = await fetchPullRequestContributors("acme-oss", "widget", 42, "octocat");
+  assert.deepEqual(logins, ["octocat", "hubot"]);
+});
+
+test("fetchPullRequestContributors skips bot authors and unlinked (null) commit authors", async (t) => {
+  t.mock.method(globalThis, "fetch", async () =>
+    new Response(
+      JSON.stringify([
+        { author: { login: "dependabot", type: "Bot" } },
+        { author: null },
+        { author: { login: "hubot", type: "User" } },
+      ]),
+      { status: 200 },
+    ),
+  );
+
+  const logins = await fetchPullRequestContributors("acme-oss", "widget", 42, "octocat");
+  assert.deepEqual(logins, ["octocat", "hubot"]);
+});
+
+test("fetchPullRequestContributors falls back to solo PR-author attribution on a GitHub API error", async (t) => {
+  t.mock.method(globalThis, "fetch", async () => new Response("rate limited", { status: 403 }));
+
+  const logins = await fetchPullRequestContributors("acme-oss", "widget", 42, "octocat");
+  assert.deepEqual(logins, ["octocat"]);
+});
+
+test("fetchPullRequestContributors sends a bearer token when one is provided", async (t) => {
+  const fetchMock = t.mock.method(globalThis, "fetch", async () => new Response(JSON.stringify([]), { status: 200 }));
+
+  await fetchPullRequestContributors("acme-oss", "widget", 42, "octocat", "test-token");
+
+  const [, init] = fetchMock.mock.calls[0].arguments as [string, RequestInit & { headers: Record<string, string> }];
+  assert.equal(init.headers.Authorization, "Bearer test-token");
 });
