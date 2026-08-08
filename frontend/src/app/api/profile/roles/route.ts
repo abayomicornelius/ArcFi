@@ -9,12 +9,17 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { isSponsor, isMaintainer, isContributor, bio } = body as {
+  const { isSponsor, isMaintainer, isContributor, bio, twitterUrl, linkedinUrl, telegramUrl } = body as {
     isSponsor?: boolean;
     isMaintainer?: boolean;
     isContributor?: boolean;
     bio?: string;
+    twitterUrl?: string;
+    linkedinUrl?: string;
+    telegramUrl?: string;
   };
+
+  const asUrlOrNull = (value: unknown) => (typeof value === "string" && value.trim() ? value.trim().slice(0, 300) : null);
 
   const user = await prisma.user.update({
     where: { id: session.user.id },
@@ -23,6 +28,9 @@ export async function POST(req: Request) {
       isMaintainer: Boolean(isMaintainer),
       isContributor: Boolean(isContributor),
       bio: typeof bio === "string" ? bio.slice(0, 280) : undefined,
+      twitterUrl: asUrlOrNull(twitterUrl),
+      linkedinUrl: asUrlOrNull(linkedinUrl),
+      telegramUrl: asUrlOrNull(telegramUrl),
     },
   });
 

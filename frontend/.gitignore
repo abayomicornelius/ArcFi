@@ -40,6 +40,7 @@ yarn-error.log*
 # local sqlite db (run `npx prisma migrate dev` to recreate)
 /prisma/*.db
 /prisma/*.db-journal
+/dev.db
 
 # typescript
 *.tsbuildinfo

@@ -3,7 +3,15 @@ import { Coins, Flag, PiggyBank, CheckCircle2 } from "lucide-react";
 /** Static mockup of the /app dashboard — proves the product exists without faking live data. */
 export function AppPreview() {
   return (
-    <div className="overflow-hidden rounded-lg border border-ink-200 bg-paper-raised shadow-[0_20px_60px_-20px_rgba(20,24,31,0.25)]">
+    <div className="group relative">
+      <div
+        className="pointer-events-none absolute -inset-4 -z-10 rounded-2xl opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-60"
+        style={{ background: "radial-gradient(circle, rgba(74,143,224,0.25), transparent 70%)" }}
+      />
+      <div className="absolute -top-3 -right-3 z-10 flex items-center gap-1.5 rounded-full border border-ink-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-emerald-600 shadow-[0_4px_12px_rgba(20,24,31,0.1)]">
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" /> Live product
+      </div>
+      <div className="overflow-hidden rounded-lg border border-ink-200 bg-paper-raised shadow-[0_20px_60px_-20px_rgba(20,24,31,0.25)] transition-transform duration-500 ease-out group-hover:-translate-y-1.5 group-hover:shadow-[0_28px_70px_-20px_rgba(20,24,31,0.35)]">
       <div className="flex items-center gap-1.5 border-b border-ink-100 bg-ink-50 px-4 py-3">
         <span className="h-2.5 w-2.5 rounded-full bg-red-300" />
         <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
@@ -62,6 +70,7 @@ export function AppPreview() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

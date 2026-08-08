@@ -50,6 +50,21 @@ export function ProfileCard({
 
       {entry.bio && <p className="mt-3 line-clamp-2 text-sm text-ink-500">{entry.bio}</p>}
 
+      {entry.repos && entry.repos.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {entry.repos.slice(0, 3).map((repo) => (
+            <span
+              key={`${repo.githubOwner}/${repo.githubRepo}`}
+              className="flex items-center gap-1 rounded-full border border-ink-200 bg-white px-2 py-0.5 text-[11px] font-medium text-ink-600"
+            >
+              <GitBranch className="h-2.5 w-2.5 text-ink-300" />
+              {repo.githubOwner}/{repo.githubRepo}
+            </span>
+          ))}
+          {entry.repos.length > 3 && <span className="text-[11px] text-ink-400">+{entry.repos.length - 3} more</span>}
+        </div>
+      )}
+
       {statLabel && statValue !== undefined && (
         <div className="mt-4 flex items-center justify-between border-t border-ink-100 pt-3">
           <span className="text-xs text-ink-400">{statLabel}</span>

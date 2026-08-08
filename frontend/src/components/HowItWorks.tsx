@@ -1,4 +1,5 @@
 import { Wallet, GitPullRequest, Banknote } from "lucide-react";
+import { Reveal } from "./Reveal";
 
 const STEPS = [
   {
@@ -33,16 +34,18 @@ export function HowItWorks() {
       <div className="absolute left-0 right-0 top-6 hidden h-px bg-gradient-to-r from-usdc-200 via-gold-200 to-emerald-200 sm:block" />
       <div className="grid gap-8 sm:grid-cols-3">
         {STEPS.map((step, i) => (
-          <div key={step.title} className="relative">
-            <div className={`relative z-10 mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white ring-4 ${step.ring}`}>
+          <Reveal key={step.title} delay={i * 0.12} className="relative">
+            <div
+              className={`relative z-10 mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white ring-4 transition-transform duration-300 hover:scale-110 ${step.ring}`}
+            >
               <span className={`absolute -top-1.5 -left-1.5 flex h-5 w-5 items-center justify-center rounded-full ${step.dot} text-[10px] font-bold text-white`}>
                 {i + 1}
               </span>
               <step.icon className={`h-5 w-5 ${step.iconColor}`} />
             </div>
-            <h4 className="mb-1.5 text-sm font-semibold text-ink-900">{step.title}</h4>
-            <p className="text-sm leading-relaxed text-ink-500">{step.body}</p>
-          </div>
+            <h4 className="mb-1.5 text-sm font-semibold text-foreground">{step.title}</h4>
+            <p className="text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+          </Reveal>
         ))}
       </div>
     </div>

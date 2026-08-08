@@ -4,6 +4,7 @@ import { getAllParticipants } from "./onchain";
 
 export type DirectoryEntry = {
   key: string;
+  userId: string | null;
   address: string | null;
   githubLogin: string | null;
   githubAvatarUrl: string | null;
@@ -13,6 +14,7 @@ export type DirectoryEntry = {
   fundedCount: number;
   receivedUsdc: bigint;
   receivedCount: number;
+  repos?: { githubOwner: string; githubRepo: string; avatarUrl: string | null }[];
 };
 
 async function buildEntries(role: "isSponsor" | "isMaintainer" | "isContributor", statsField: "fundedUsdc" | "receivedUsdc" | null) {
@@ -27,6 +29,7 @@ async function buildEntries(role: "isSponsor" | "isMaintainer" | "isContributor"
     const key = (user.walletAddress ?? user.id).toLowerCase();
     byWallet.set(key, {
       key,
+      userId: user.id,
       address: user.walletAddress,
       githubLogin: user.githubLogin,
       githubAvatarUrl: user.githubAvatarUrl ?? user.image,
@@ -52,6 +55,7 @@ async function buildEntries(role: "isSponsor" | "isMaintainer" | "isContributor"
       } else {
         byWallet.set(key, {
           key,
+          userId: null,
           address: p.address,
           githubLogin: null,
           githubAvatarUrl: null,
@@ -81,6 +85,33 @@ export function getContributors() {
   return buildEntries("isContributor", "receivedUsdc");
 }
 
-export function getMaintainers() {
-  return buildEntries("isMaintainer", null);
+export async function getMaintainers() {
+  const entries = await buildEntries("isMaintainer", null);
+
+  const userIds = entries.map((e) => e.userId).filter((id): id is string => Boolean(id));
+  if (userIds.length === 0) return entries;
+
+  const repos = await prisma.repo.findMany({
+    where: { addedByUserId: { in: userIds } },
+    select: { githubOwner: true, githubRepo: true, avatarUrl: true, addedByUserId: true },
+  });
+  const byUserId = new Map<string, DirectoryEntry["repos"]>();
+  for (const repo of repos) {
+    const list = byUserId.get(repo.addedByUserId) ?? [];
+    list.push({ githubOwner: repo.githubOwner, githubRepo: repo.githubRepo, avatarUrl: repo.avatarUrl });
+    byUserId.set(repo.addedByUserId, list);
+  }
+
+  for (const entry of entries) {
+    if (entry.userId) entry.repos = byUserId.get(entry.userId);
+  }
+
+  return entries;
+}
+
+export async function getAllRepos() {
+  return prisma.repo.findMany({
+    orderBy: { stars: "desc" },
+    include: { addedBy: { select: { githubLogin: true, githubAvatarUrl: true, walletAddress: true } } },
+  });
 }

@@ -1,9 +1,47 @@
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import type { TxState } from "@/lib/hooks";
 
-export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+/** Underline tab switcher for grouping several distinct actions under one card, instead of stacking them all. */
+export function ActionTabs<T extends string>({
+  tabs,
+  active,
+  onChange,
+}: {
+  tabs: { id: T; label: string }[];
+  active: T;
+  onChange: (id: T) => void;
+}) {
   return (
-    <div className={`rounded-lg border border-ink-200 bg-paper-raised p-6 shadow-[0_1px_2px_rgba(20,24,31,0.04)] ${className}`}>
+    <div className="mb-5 flex gap-5 border-b border-ink-100">
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          onClick={() => onChange(tab.id)}
+          className={`relative pb-3 text-sm font-medium transition-colors ${
+            active === tab.id ? "text-ink-900" : "text-ink-400 hover:text-ink-600"
+          }`}
+        >
+          {tab.label}
+          {active === tab.id && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary" />}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function Card({
+  children,
+  className = "",
+  lift = true,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  lift?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-sm ${lift ? "card-lift" : ""} ${className}`}
+    >
       {children}
     </div>
   );
@@ -15,7 +53,7 @@ export function Field({
   children,
 }: {
   label: string;
-  hint?: string;
+  hint?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -31,7 +69,11 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-usdc-500 focus:ring-2 focus:ring-usdc-100 ${props.className ?? ""}`}
+      // bg-card stays white in both themes (the "paper" card look), so its
+      // text must use the ink scale (also theme-invariant) rather than
+      // text-foreground — that one flips to near-white in dark mode and
+      // becomes invisible on the still-white input background.
+      className={`w-full rounded-xl border border-input bg-card px-3 py-2 text-sm text-ink-900 outline-none transition [color-scheme:light] placeholder:text-ink-400 focus:border-primary focus:ring-2 focus:ring-primary/15 ${props.className ?? ""}`}
     />
   );
 }
@@ -44,15 +86,16 @@ export function Button({
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "danger"; loading?: boolean }) {
   const styles = {
-    primary: "bg-usdc-500 text-white hover:bg-usdc-600 disabled:bg-ink-200 disabled:text-ink-400",
-    secondary: "bg-ink-900 text-white hover:bg-ink-700 disabled:bg-ink-200 disabled:text-ink-400",
-    danger: "bg-white text-red-600 border border-red-200 hover:bg-red-50 disabled:opacity-40",
+    primary:
+      "bg-primary text-primary-foreground shadow-[0_1px_0_0_rgba(255,255,255,0.15)_inset,0_8px_20px_-8px_hsl(var(--shadow-color)/0.5)] hover:brightness-110 active:brightness-95 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none btn-glow",
+    secondary: "bg-foreground text-background hover:brightness-125 disabled:bg-muted disabled:text-muted-foreground",
+    danger: "bg-card text-destructive border border-destructive/25 hover:bg-destructive/10 disabled:opacity-40",
   }[variant];
 
   return (
     <button
       {...props}
-      className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed ${styles} ${className}`}
+      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:translate-y-0 ${styles} ${className}`}
     >
       {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
       {children}

@@ -1,15 +1,21 @@
 "use client";
 
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi";
+import { toast } from "sonner";
 import { activeChain } from "@/lib/chains";
 
 function shortAddress(address: string) {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+function errorMessage(err: unknown) {
+  if (err instanceof Error) return err.message.split("\n")[0].slice(0, 140);
+  return "Could not connect wallet";
+}
+
 export function ConnectButton() {
   const { address, isConnected, chainId } = useAccount();
-  const { connect, connectors, isPending } = useConnect();
+  const { connectAsync, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
   const { switchChain } = useSwitchChain();
 
@@ -28,7 +34,7 @@ export function ConnectButton() {
         )}
         <button
           onClick={() => disconnect()}
-          className="rounded-full border border-ink-200 bg-white px-4 py-1.5 text-sm font-medium text-ink-800 shadow-sm hover:border-ink-300"
+          className="rounded-full border border-ink-200 bg-white px-4 py-1.5 text-sm font-medium text-ink-800 shadow-sm transition hover:border-ink-300"
         >
           <span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-500 align-middle" />
           {shortAddress(address)}
@@ -39,13 +45,29 @@ export function ConnectButton() {
 
   const connector = connectors[0];
 
+  async function handleConnect() {
+    if (!connector) return;
+    try {
+      await connectAsync({ connector });
+    } catch (err) {
+      if (err instanceof Error && err.name === "ProviderNotFoundError") {
+        toast.error("No wallet extension found", {
+          description: "Install MetaMask or another browser wallet, then try again.",
+          action: { label: "Get MetaMask", onClick: () => window.open("https://metamask.io/download", "_blank") },
+        });
+        return;
+      }
+      toast.error("Could not connect wallet", { description: errorMessage(err) });
+    }
+  }
+
   return (
     <button
-      onClick={() => connector && connect({ connector })}
+      onClick={handleConnect}
       disabled={!connector || isPending}
-      className="rounded-full bg-ink-900 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-700 disabled:opacity-50"
+      className="btn-glow rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:brightness-110 disabled:opacity-50"
     >
-      {isPending ? "Connecting…" : connector ? "Connect Wallet" : "No wallet found"}
+      {isPending ? "Connecting…" : "Connect Wallet"}
     </button>
   );
 }

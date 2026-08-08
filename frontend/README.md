@@ -20,6 +20,16 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## GitHub sign-in
+
+"Connect GitHub" needs an OAuth App's Client ID/Secret in `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` (`.env.local`). GitHub only lets you create these through the web UI — there's no API for it:
+
+1. Open [github.com/settings/applications/new](https://github.com/settings/applications/new?name=ArcFi&url=http%3A%2F%2Flocalhost%3A3000&callback_url=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fauth%2Fcallback%2Fgithub) (pre-filled with the values below).
+2. Confirm: **Homepage URL** `http://localhost:3000`, **Authorization callback URL** `http://localhost:3000/api/auth/callback/github`.
+3. Click **Register application**.
+4. Copy the **Client ID**, then click **Generate a new client secret** and copy that too (shown once).
+5. Paste both into `frontend/.env.local` as `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET`, then restart `npm run dev`.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

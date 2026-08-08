@@ -1,5 +1,11 @@
 generator client {
   provider = "prisma-client-js"
+  // Dedicated output — without this, frontend and apps/api (a separate
+  // Postgres schema in this same pnpm workspace) both resolve the default
+  // "@prisma/client" package to the same location in the pnpm store, and
+  // whichever one last ran `prisma generate` silently overwrites the
+  // other's generated types.
+  output   = "../node_modules/.prisma-frontend/client"
 }
 
 datasource db {
@@ -18,8 +24,14 @@ model User {
 
   githubLogin     String?
   githubAvatarUrl String?
+  githubJoinedAt  DateTime?
   bio             String?
-  walletAddress   String? @unique
+  walletAddress   String?   @unique
+  walletLinkedAt  DateTime?
+
+  twitterUrl  String?
+  linkedinUrl String?
+  telegramUrl String?
 
   isSponsor     Boolean @default(false)
   isMaintainer  Boolean @default(false)
@@ -30,6 +42,30 @@ model User {
 
   accounts Account[]
   sessions Session[]
+  repos    Repo[]
+
+  bountyApplications BountyApplication[]
+  bountyComments     BountyComment[]
+  assignedBounties   Bounty[]            @relation("BountyAssignee")
+  bountyRequests     BountyRequest[]
+  notifications      Notification[]
+}
+
+// In-app notifications for the two decision points that currently have no
+// user-facing signal: a maintainer approving/rejecting a bounty application,
+// and a sponsor fulfilling a maintainer's funding request.
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // application_approved | application_rejected | request_fulfilled
+  title     String
+  body      String?
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt])
 }
 
 model Account {
@@ -86,5 +122,92 @@ model Bounty {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
+  // Set once a maintainer approves a contributor's application — signals
+  // "someone's already on this" without affecting the on-chain release,
+  // which still only fires when the oracle sees a merged, linked PR.
+  assignedUserId String?
+  assignedUser   User?   @relation("BountyAssignee", fields: [assignedUserId], references: [id])
+
+  applications BountyApplication[]
+  comments     BountyComment[]
+  fulfillsRequest BountyRequest?
+
   @@index([githubOwner, githubRepo, githubIssueNumber, status])
+}
+
+// A maintainer's public ask for funding on one of their own issues — exists
+// before any USDC moves. Sponsors browse these on /bounties and fund the
+// linked issue; once funded, it's marked fulfilled and linked to the real
+// Bounty the funding created. This is the other half of the funding loop:
+// sponsors don't have to go looking, maintainers can ask.
+model BountyRequest {
+  id                String   @id @default(cuid())
+  contractType      String // "escrow" | "milestone"
+  githubOwner       String
+  githubRepo        String
+  githubIssueNumber Int
+  title             String
+  description       String?
+  suggestedAmount   String?
+  status            String   @default("open") // open | funded | withdrawn
+  requestedByUserId String
+  requestedBy       User     @relation(fields: [requestedByUserId], references: [id], onDelete: Cascade)
+  fundedBountyId    String?  @unique
+  fundedBounty      Bounty?  @relation(fields: [fundedBountyId], references: [id])
+  createdAt         DateTime @default(now())
+
+  @@index([githubOwner, githubRepo, status])
+}
+
+// A contributor's request to work a bounty. The repo's registered maintainer
+// (or the bounty's sponsor, if the repo isn't registered) reviews and
+// approves one, which sets Bounty.assignedUserId — this is separate from,
+// and doesn't gate, the actual on-chain payout.
+model BountyApplication {
+  id        String   @id @default(cuid())
+  bountyId  String
+  bounty    Bounty   @relation(fields: [bountyId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   String?
+  status    String   @default("pending") // pending | approved | rejected
+  createdAt DateTime @default(now())
+
+  @@unique([bountyId, userId])
+  @@index([bountyId, status])
+}
+
+// A lightweight discussion thread on a bounty — questions before applying,
+// status updates, that kind of thing.
+model BountyComment {
+  id        String   @id @default(cuid())
+  bountyId  String
+  bounty    Bounty   @relation(fields: [bountyId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([bountyId])
+}
+
+// A repo/org a maintainer has listed on ArcFi, verified against their
+// GitHub OAuth token at submission time (admin/maintain access required) —
+// this is what sponsors browse and fund issues against, and what backs the
+// GitHub owner/repo autocomplete in the funding forms.
+model Repo {
+  id              String   @id @default(cuid())
+  githubOwner     String
+  githubRepo      String
+  description     String?
+  primaryLanguage String?
+  topics          String? // comma-separated
+  stars           Int      @default(0)
+  avatarUrl       String?
+  addedByUserId   String
+  addedBy         User     @relation(fields: [addedByUserId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+
+  @@unique([githubOwner, githubRepo])
+  @@index([githubOwner, githubRepo])
 }

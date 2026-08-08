@@ -19,9 +19,10 @@ export interface RegisterBountyInput {
  * its own; skipping the GitHub fields (or not being signed in) just means
  * this bounty stays manual-release-only, same as before this existed.
  */
-export async function registerBounty(input: RegisterBountyInput) {
+/** Returns the created bounty's id on success, so callers can chain further linking (e.g. fulfilling a BountyRequest) — null otherwise. */
+export async function registerBounty(input: RegisterBountyInput): Promise<string | null> {
   if (!input.githubOwner || !input.githubRepo || !Number.isFinite(input.githubIssueNumber)) {
-    return;
+    return null;
   }
 
   try {
@@ -35,22 +36,42 @@ export async function registerBounty(input: RegisterBountyInput) {
       toast.info("Sign in with GitHub to enable automatic payout on PR merge", {
         description: "The on-chain transaction already succeeded — this only affects the auto-release oracle.",
       });
-      return;
+      return null;
     }
     if (!res.ok) {
       const body = await res.json().catch(() => ({}) as { error?: string });
       toast.warning("Could not link this bounty to GitHub", {
         description: body.error ?? "You can still release it manually.",
       });
-      return;
+      return null;
     }
+
+    const data = (await res.json()) as { bounty?: { id: string } };
 
     toast.success(`Linked to ${input.githubOwner}/${input.githubRepo}#${input.githubIssueNumber}`, {
       description: "Payout will fire automatically once the linked PR merges.",
     });
+
+    return data.bounty?.id ?? null;
   } catch {
     toast.warning("Could not reach ArcFi's API to link this bounty to GitHub", {
       description: "You can still release it manually.",
     });
+    return null;
+  }
+}
+
+/** Marks a maintainer's funding request as fulfilled once the linked issue has actually been funded on-chain. */
+export async function fulfillBountyRequest(requestId: string, bountyId: string) {
+  try {
+    await fetch(`/api/bounty-requests/${requestId}/fulfill`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bountyId }),
+    });
+  } catch {
+    // Best-effort — the on-chain funding and the GitHub link both already
+    // succeeded; this only affects whether the request disappears from the
+    // "open requests" list.
   }
 }

@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
   const user = await prisma.user.update({
     where: { id: session.user.id },
-    data: { walletAddress: checksummed },
+    data: { walletAddress: checksummed, walletLinkedAt: new Date() },
   });
 
   return NextResponse.json({ ok: true, user });
@@ -37,7 +37,7 @@ export async function DELETE() {
 
   const user = await prisma.user.update({
     where: { id: session.user.id },
-    data: { walletAddress: null },
+    data: { walletAddress: null, walletLinkedAt: null },
   });
 
   return NextResponse.json({ ok: true, user });

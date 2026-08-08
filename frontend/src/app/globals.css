@@ -1,17 +1,114 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f7f5f0;
   --foreground: #14181f;
+  --card: #ffffff;
+  --card-foreground: #14181f;
+  --popover: #ffffff;
+  --popover-foreground: #14181f;
+
+  --primary: #2775ca;
+  --primary-foreground: #f7f5f0;
+  --secondary: #eceef1;
+  --secondary-foreground: #14181f;
+
+  --accent: #d98c0f;
+  --accent-foreground: #241b04;
+  --accent-soft: #fceecb;
+
+  --muted: #eceef1;
+  --muted-foreground: #667080;
+
+  --border: #d7dbe0;
+  --input: #d7dbe0;
+  --ring: #2775ca;
+
+  --destructive: #b3432b;
+  --destructive-foreground: #f7f5f0;
+
+  --success: #0f9d58;
+  --warning: #b3792b;
+
+  --radius: 1rem;
+  --shadow-color: 220 30% 12%;
+}
+
+.dark {
+  --background: #0a0e1a;
+  --foreground: #f3efe2;
+  --card: #ffffff;
+  --card-foreground: #14181f;
+  --popover: #131a29;
+  --popover-foreground: #f3efe2;
+
+  --primary: #4a8fe0;
+  --primary-foreground: #0a0e1a;
+  --secondary: #182634;
+  --secondary-foreground: #f3efe2;
+
+  --accent: #eeab2f;
+  --accent-foreground: #241b04;
+  --accent-soft: #2c2413;
+
+  --muted: #1a2430;
+  --muted-foreground: #8992a0;
+
+  --border: #24303f;
+  --input: #24303f;
+  --ring: #4a8fe0;
+
+  --destructive: #e07257;
+  --destructive-foreground: #0a0e1a;
+
+  --success: #34c98a;
+  --warning: #eeab2f;
+
+  --shadow-color: 220 60% 3%;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
   --font-sans: var(--font-inter);
-  --font-display: var(--font-space-grotesk);
+  --font-display: var(--font-display), var(--font-inter), sans-serif;
   --font-mono: var(--font-plex-mono);
 
+  --radius-sm: calc(var(--radius) - 0.5rem);
+  --radius-md: calc(var(--radius) - 0.25rem);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 0.5rem);
+
+  /* Role palette — Sponsor/Maintainer/Contributor identity, independent of
+     the light/dark theme tokens above. */
   --color-ink-50: #f6f7f8;
   --color-ink-100: #eceef1;
   --color-ink-200: #d7dbe0;
@@ -23,7 +120,6 @@
   --color-ink-800: #262b38;
   --color-ink-900: #14181f;
 
-  /* Sponsor — USDC brand blue */
   --color-usdc-50: #e9f4ff;
   --color-usdc-100: #cde6ff;
   --color-usdc-400: #4a8fe0;
@@ -31,7 +127,6 @@
   --color-usdc-600: #1e5fa8;
   --color-usdc-700: #174a83;
 
-  /* Maintainer — gold */
   --color-gold-50: #fef8ec;
   --color-gold-100: #fceecb;
   --color-gold-400: #eeab2f;
@@ -39,33 +134,92 @@
   --color-gold-600: #b06e08;
   --color-gold-700: #8a560a;
 
-  /* Contributor uses Tailwind's stock emerald-* scale directly (no override,
-     avoids partially shadowing the default palette). */
-
-  /* Hero accent — violet, used only in the gradient mesh */
   --color-violet-400: #9c7cf0;
   --color-violet-500: #7c5ce0;
   --color-violet-600: #5f3fc4;
 
-  --color-paper: #f7f5f0;
-  --color-paper-raised: #ffffff;
+  --color-paper: var(--background);
+  --color-paper-raised: var(--card);
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-shimmer: shimmer 2.4s linear infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
 }
 
-body {
-  background: var(--color-paper);
-  color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  background-image: radial-gradient(circle at 1px 1px, rgba(20, 24, 31, 0.06) 1px, transparent 0);
-  background-size: 24px 24px;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+    background-image: radial-gradient(circle at 1px 1px, rgba(20, 24, 31, 0.06) 1px, transparent 0);
+    background-size: 24px 24px;
+    overflow-x: hidden;
+  }
+
+  .dark body {
+    background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent-foreground);
+  }
 }
 
-h1,
-h2,
-h3,
-h4,
-.font-display {
-  font-family: var(--font-display), var(--font-sans), sans-serif;
-  letter-spacing: -0.01em;
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Subtle fractal-noise texture, blended over a surface for print-like grain. */
+  .grain-surface {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .grain-surface::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  }
+
+  .glass-panel {
+    background: color-mix(in oklab, var(--color-card) 72%, transparent);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid color-mix(in oklab, var(--color-border) 70%, transparent);
+  }
+
+  .shimmer-text {
+    background: linear-gradient(100deg, var(--color-foreground) 40%, var(--color-accent) 50%, var(--color-foreground) 60%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: var(--animate-shimmer);
+  }
 }
 
 /* Two confident corner glows over a diagonal base — deliberately not three
@@ -83,4 +237,48 @@ h4,
     linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
   background-size: 44px 44px;
   mask-image: radial-gradient(ellipse 90% 80% at 50% 20%, black 40%, transparent 90%);
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-16px, 14px); }
+}
+
+.hero-orb {
+  animation: drift 14s ease-in-out infinite;
+}
+
+.hero-orb-slow {
+  animation: drift 20s ease-in-out infinite reverse;
+}
+
+.text-gradient-brand {
+  background: linear-gradient(100deg, #7fb3f3 0%, #b8a3f5 55%, #6fe0b0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Primary CTAs get a soft ambient glow on hover, distinct from a flat color shift. */
+.btn-glow {
+  transition: box-shadow 0.25s ease, transform 0.15s ease;
+}
+
+.btn-glow:hover {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4), 0 8px 24px -6px rgba(124, 92, 224, 0.55);
+  transform: translateY(-1px);
+}
+
+.btn-glow:active {
+  transform: translateY(0);
+}
+
+/* Cards lift a hair on hover so the surface feels touchable, not flat. */
+.card-lift {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.card-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px -20px rgba(20, 24, 31, 0.25);
 }
