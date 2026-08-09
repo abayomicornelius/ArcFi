@@ -157,7 +157,11 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    overflow-x: hidden;
+    /* `hidden` (not `clip`) implicitly promotes overflow-y to `auto` per the
+       CSS overflow spec, which breaks `position: sticky` for any descendant
+       (the header) relative to the viewport — `clip` avoids that side effect
+       while still preventing horizontal scroll from full-bleed decorative elements. */
+    overflow-x: clip;
   }
 
   body {
@@ -166,7 +170,8 @@
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;
     background-image: radial-gradient(circle at 1px 1px, rgba(20, 24, 31, 0.06) 1px, transparent 0);
     background-size: 24px 24px;
-    overflow-x: hidden;
+    /* clip, not hidden — see the comment on html's overflow-x above. */
+    overflow-x: clip;
   }
 
   .dark body {
