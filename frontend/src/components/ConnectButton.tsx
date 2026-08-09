@@ -34,7 +34,7 @@ export function ConnectButton() {
         )}
         <button
           onClick={() => disconnect()}
-          className="rounded-full border border-ink-200 bg-white px-4 py-1.5 text-sm font-medium text-ink-800 shadow-sm transition hover:border-ink-300"
+          className="inline-flex min-w-[160px] items-center justify-center rounded-full border border-ink-200 bg-white px-6 py-2 text-sm font-medium text-ink-800 shadow-sm transition hover:border-ink-300"
         >
           <span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-500 align-middle" />
           {shortAddress(address)}
@@ -65,7 +65,7 @@ export function ConnectButton() {
     <button
       onClick={handleConnect}
       disabled={!connector || isPending}
-      className="btn-glow rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:brightness-110 disabled:opacity-50"
+      className="btn-glow inline-flex min-w-[160px] items-center justify-center rounded-full bg-primary px-7 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:brightness-110 disabled:opacity-50"
     >
       {isPending ? "Connecting…" : "Connect Wallet"}
     </button>

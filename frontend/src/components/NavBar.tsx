@@ -14,7 +14,6 @@ import { NotificationBell } from "./NotificationBell";
 import { Logo } from "./Logo";
 
 const LINKS = [
-  { href: "/app", label: "App" },
   { href: "/bounties", label: "Bounties" },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/analytics", label: "Analytics" },
@@ -108,15 +107,15 @@ export function NavBar() {
         <div className="hidden items-center gap-3 md:flex">
           <ThemeToggle />
           {signedUp && <NotificationBell />}
-          {signedUp && <FaucetButton />}
-          {signedUp && <ConnectButton />}
+          <FaucetButton />
+          <ConnectButton />
           <GithubMenu />
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle />
           {signedUp && <NotificationBell />}
-          {signedUp && <ConnectButton />}
+          <ConnectButton />
           <button
             type="button"
             aria-label="Toggle menu"
@@ -155,7 +154,7 @@ export function NavBar() {
                 </Link>
               ))}
               <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
-                {signedUp && <FaucetButton />}
+                <FaucetButton />
                 <GithubMenu />
               </div>
             </div>
