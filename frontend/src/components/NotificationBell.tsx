@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { Bell, Check, X } from "lucide-react";
+import { toast } from "sonner";
 
 type Notification = {
   id: string;
@@ -50,21 +51,25 @@ export function NotificationBell({ dark = false }: { dark?: boolean }) {
   }, [status]);
 
   function handleOpen() {
+    if (status !== "authenticated") {
+      toast.info("Sign in with GitHub to see notifications", {
+        action: { label: "Sign in", onClick: () => signIn("github") },
+      });
+      return;
+    }
     setOpen((v) => !v);
     if (!open && unreadCount > 0) {
       fetch("/api/notifications/read-all", { method: "POST" }).then(() => setUnreadCount(0));
     }
   }
 
-  if (status !== "authenticated") return null;
-
   return (
     <div className="relative">
       <button
         onClick={handleOpen}
         aria-label="Notifications"
-        className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition ${
-          dark ? "border-white/15 text-white/70 hover:bg-white/5 hover:text-white" : "border-ink-200 text-ink-600 hover:border-ink-300"
+        className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition ${
+          dark ? "border-white/15 text-white/70 hover:bg-white/5 hover:text-white" : "border-border text-foreground/70 hover:border-foreground/30 hover:text-foreground"
         }`}
       >
         <Bell className="h-4 w-4" />
@@ -75,7 +80,7 @@ export function NotificationBell({ dark = false }: { dark?: boolean }) {
         )}
       </button>
 
-      {open && (
+      {open && status === "authenticated" && (
         <div
           className="absolute right-0 top-full z-30 mt-2 w-80 overflow-hidden rounded-lg border border-ink-200 bg-white shadow-lg"
           onMouseLeave={() => setOpen(false)}

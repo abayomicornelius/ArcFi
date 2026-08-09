@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, Moon, Sun, X } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -44,8 +43,6 @@ function ThemeToggle() {
 
 export function NavBar() {
   const pathname = usePathname();
-  const { status } = useSession();
-  const signedUp = status === "authenticated";
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -81,7 +78,7 @@ export function NavBar() {
 
         <div className="hidden items-center gap-2.5 md:flex">
           <ThemeToggle />
-          {signedUp && <NotificationBell />}
+          <NotificationBell />
           <FaucetButton />
           <ConnectButton />
           <GithubMenu />
@@ -89,7 +86,7 @@ export function NavBar() {
 
         <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle />
-          {signedUp && <NotificationBell />}
+          <NotificationBell />
           <ConnectButton />
           <button
             type="button"
