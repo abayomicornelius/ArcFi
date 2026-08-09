@@ -72,38 +72,12 @@ export function NavBar() {
         scrolled || mobileOpen ? "border-border bg-background/95 backdrop-blur-md" : "border-border/40 bg-background/0"
       }`}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2.5 transition-transform active:scale-95">
-            <Logo size={28} />
-            <span className="font-display text-sm font-semibold text-foreground">ArcFi</span>
-          </Link>
-          <span aria-hidden className="hidden h-6 w-px bg-border md:block" />
-          <nav className="hidden items-center gap-6 md:flex">
-            {LINKS.map((link) => {
-              const active = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  aria-current={active ? "page" : undefined}
-                  className={`relative pb-[3px] font-mono text-[11px] font-medium uppercase tracking-[0.08em] transition-colors ${
-                    active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {link.label}
-                  {mounted && active && (
-                    <motion.span
-                      layoutId="nav-active-underline"
-                      className="absolute inset-x-0 -bottom-px h-[2px] bg-primary"
-                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                    />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+      {/* Row 1 — identity + actions, slim */}
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-2 md:border-b md:border-border/40">
+        <Link href="/" className="flex items-center gap-2.5 transition-transform active:scale-95">
+          <Logo size={26} />
+          <span className="font-display text-sm font-semibold text-foreground">ArcFi</span>
+        </Link>
 
         <div className="hidden items-center gap-2.5 md:flex">
           <ThemeToggle />
@@ -129,6 +103,32 @@ export function NavBar() {
         </div>
       </div>
 
+      {/* Row 2 — primary links, centered masthead-style, desktop only */}
+      <nav className="mx-auto hidden max-w-6xl items-center justify-center gap-9 px-6 py-2.5 md:flex">
+        {LINKS.map((link) => {
+          const active = pathname === link.href;
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              aria-current={active ? "page" : undefined}
+              className={`relative pb-[3px] font-display text-[15px] font-semibold transition-colors ${
+                active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {link.label}
+              {mounted && active && (
+                <motion.span
+                  layoutId="nav-active-underline"
+                  className="absolute inset-x-0 -bottom-px h-[2px] bg-primary"
+                  transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                />
+              )}
+            </Link>
+          );
+        })}
+      </nav>
+
       {/* Fades + slides rather than animating height, so GithubMenu's own popover
           isn't clipped by an overflow-hidden ancestor once this panel is open. */}
       <AnimatePresence>
@@ -149,7 +149,7 @@ export function NavBar() {
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
                     aria-current={active ? "page" : undefined}
-                    className={`rounded-md border-l-2 px-4 py-3 font-mono text-xs font-medium uppercase tracking-[0.08em] transition-colors ${
+                    className={`rounded-md border-l-2 px-4 py-3 font-display text-base font-semibold transition-colors ${
                       active ? "border-primary bg-secondary text-foreground" : "border-transparent text-muted-foreground hover:border-border hover:bg-secondary hover:text-foreground"
                     }`}
                   >
