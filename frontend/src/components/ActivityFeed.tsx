@@ -39,6 +39,28 @@ const SOURCES: { kind: ActivityKind; address: `0x${string}`; abi: (typeof contra
 const LOG_CHUNK_SIZE = 2_000n;
 const MAX_CHUNKS = 5;
 
+// Arc's public RPC also enforces a short-window request budget, independent
+// of the per-call block-range cap above ("Request exceeds defined limit") —
+// scanning all three contracts at once on mount (each up to 1 + MAX_CHUNKS
+// calls) fires enough requests in the same tick to exhaust it even though
+// every individual call is well-formed. A stagger between requests keeps
+// this well under that burst limit, and a retry with backoff absorbs the odd
+// hiccup instead of the feed going quietly empty the moment it's hit.
+const RPC_REQUEST_STAGGER_MS = 300;
+const RPC_RETRY_DELAYS_MS = [400, 900];
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (attempt >= RPC_RETRY_DELAYS_MS.length) throw err;
+      await sleep(RPC_RETRY_DELAYS_MS[attempt]);
+    }
+  }
+}
+
 type PublicClient = NonNullable<ReturnType<typeof usePublicClient>>;
 
 async function getRecentLogs(client: PublicClient, address: `0x${string}`, abi: (typeof contracts)["escrow"]["abi"]) {
@@ -49,7 +71,8 @@ async function getRecentLogs(client: PublicClient, address: `0x${string}`, abi: 
   for (let i = 0; i < MAX_CHUNKS; i++) {
     const fromBlock = toBlock > LOG_CHUNK_SIZE ? toBlock - LOG_CHUNK_SIZE + 1n : 0n;
     try {
-      const logs = await client.getContractEvents({ address, abi, fromBlock, toBlock });
+      if (i > 0) await sleep(RPC_REQUEST_STAGGER_MS);
+      const logs = await withRetry(() => client.getContractEvents({ address, abi, fromBlock, toBlock }));
       allLogs.push(...logs);
     } catch {
       break;
@@ -76,17 +99,20 @@ export function ActivityFeed() {
     async function loadHistory() {
       if (!publicClient) return;
 
-      const all = (
-        await Promise.all(
-          SOURCES.map(({ kind, address, abi }) =>
-            getRecentLogs(publicClient, address, abi).then((logs) =>
-              logs
-                .map((log) => describeLog(kind, log.eventName, log.args, log.transactionHash, log.blockNumber, log.logIndex ?? 0))
-                .filter((x): x is ActivityItem => x !== null),
-            ),
-          ),
-        )
-      ).flat();
+      // Sequential, not Promise.all — three contracts scanned concurrently
+      // would still burst the RPC even with per-call staggering inside each
+      // scan (see RPC_REQUEST_STAGGER_MS above).
+      const all: ActivityItem[] = [];
+      for (let i = 0; i < SOURCES.length; i++) {
+        if (cancelled) return;
+        const { kind, address, abi } = SOURCES[i];
+        if (i > 0) await sleep(RPC_REQUEST_STAGGER_MS);
+        const logs = await getRecentLogs(publicClient, address, abi);
+        for (const log of logs) {
+          const item = describeLog(kind, log.eventName, log.args, log.transactionHash, log.blockNumber, log.logIndex ?? 0);
+          if (item) all.push(item);
+        }
+      }
 
       all.sort((a, b) => (b.blockNumber === a.blockNumber ? b.logIndex - a.logIndex : Number(b.blockNumber - a.blockNumber)));
 
