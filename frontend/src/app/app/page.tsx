@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAccount } from "wagmi";
@@ -32,6 +32,18 @@ const DIRECTORY_LINKS = [
 type TabId = (typeof TABS)[number]["id"];
 
 export default function AppPage() {
+  return (
+    <Suspense fallback={null}>
+      <AppPageContent />
+    </Suspense>
+  );
+}
+
+// useSearchParams() bails Next.js out of static generation unless it's
+// isolated behind a Suspense boundary — invisible in `next dev`, but a hard
+// build failure ("Export encountered an error on /app/page") in `next build`
+// / production, which is exactly what tripped up the Netlify deploy.
+function AppPageContent() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const initialTab: TabId = TABS.some((t) => t.id === tabParam) ? (tabParam as TabId) : "escrow";
