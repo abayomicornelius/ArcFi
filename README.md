@@ -109,7 +109,7 @@ Get testnet USDC (used for both gas and deposits) from the [Circle faucet](https
 
 - **Marketing home** (`/`) — the pitch, live protocol stats, and how-it-works.
 - **App** (`/app`) — connect a wallet, fund an escrow, allocate/release milestones, deposit into or draw down a maintenance pool. A live activity feed watches all three contracts' events in real time. No WalletConnect account needed; it connects directly to an injected wallet (MetaMask etc.).
-- **Profiles** — sign in with GitHub (`/onboarding`) to register as a **sponsor**, **maintainer**, and/or **contributor**, write a bio, and link a wallet. Profiles are backed by a real database (Prisma + SQLite locally), not mocked.
+- **Profiles** — sign in with GitHub (`/onboarding`) to register as a **sponsor**, **maintainer**, and/or **contributor**, write a bio, and link a wallet. Profiles are backed by a real database (Prisma + Postgres), not mocked.
 - **Directories** (`/sponsors`, `/maintainers`, `/contributors`) — public listings that merge registered profiles with on-chain USDC funded/received totals computed by scanning contract events. `/profile/[address]` is the per-wallet detail page.
 - **Bounty marketplace** (`/bounties`) — every GitHub issue with USDC actually escrowed on Arc, browsable without a wallet. A maintainer can also **request funding** for an unfunded issue (`/bounties/request`); a sponsor funding it from the request auto-links the two. Contributors can apply to a bounty (`/bounties/[id]`), and the repo's verified maintainer (or the bounty's sponsor, if the repo isn't listed) approves one — an off-chain "who's on this" signal that never gates the actual on-chain payout.
 - **Repo listings** (`/maintainers/submit`) — list a repo only after proving admin/maintain access to it via the GitHub API using the signer's own OAuth token, not a self-reported name.
@@ -129,9 +129,11 @@ forge script script/DeployLocal.s.sol --rpc-url http://127.0.0.1:8545 --broadcas
 
 # 3. Set up the frontend
 cd frontend
-cp .env.example .env.local   # fill in the logged addresses from step 2
+cp .env.example .env.local   # fill in the logged addresses from step 2, plus a
+                              # DATABASE_URL from a free Postgres instance
+                              # (neon.tech or supabase.com both work)
 npm install                  # also runs `prisma generate`
-npm run db:migrate           # creates the local SQLite profiles database
+npm run db:migrate           # applies migrations to your Postgres database
 npm run dev
 ```
 
