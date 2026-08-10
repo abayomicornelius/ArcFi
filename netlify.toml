@@ -1,0 +1,12 @@
+# The Next.js app lives in frontend/, not the repo root (this repo also
+# holds the Foundry contracts and the oracle backend) — without `base` set,
+# Netlify never finds frontend/package.json, doesn't recognize this as a
+# Next.js site at all, and publishes nothing, which is why every route was
+# falling through to Netlify's own generic 404 page instead of the app.
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
